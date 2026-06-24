@@ -1,0 +1,77 @@
+{
+  "name": "aistudio-electron-dify",
+  "version": "0.1.0",
+  "private": true,
+  "author": "AIStudio",
+  "description": "Electron + React + TypeScript for a Dify robot chat client.",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"node scripts/wait-for-vite.cjs\"",
+    "dev:vite": "vite --host 127.0.0.1",
+    "compile:electron": "tsc -p electron/tsconfig.json",
+    "dev:electron": "tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 ELECTRON_RUN_AS_NODE= electron .",
+    "debug:electron": "tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 ELECTRON_RUN_AS_NODE= electron --inspect=9229 .",
+    "build": "tsc && vite build && tsc -p electron/tsconfig.json",
+    "preview": "vite preview",
+    "start": "electron .",
+    "prisma:generate": "prisma generate",
+    "prisma:pull": "prisma db pull",
+    "prisma:migrate": "prisma migrate dev",
+    "clean:release": "node scripts/clean-release.cjs",
+    "pack:dir": "npm run clean:release && npm run build && cross-env ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win dir"
+  },
+  "dependencies": {
+    "@prisma/adapter-mssql": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "dotenv": "^16.4.7",
+    "lucide-react": "^0.468.0",
+    "prisma": "^7.8.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "33.4.11",
+    "electron-builder": "^26.15.2",
+    "typescript": "^5.7.0",
+    "vite": "^7.0.0"
+  },
+  "build": {
+    "appId": "com.local.aistudio",
+    "productName": "AIStudio",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "config",
+        "to": "config",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/app-icon.ico",
+        "to": "assets/app-icon.ico"
+      }
+    ],
+    "win": {
+      "icon": "build/app-icon.ico",
+      "target": [
+        "dir"
+      ]
+    }
+  }
+}

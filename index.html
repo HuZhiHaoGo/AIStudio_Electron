@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>匠宝Bot</title>
+    <link rel="stylesheet" href="/src/startup.css" />
+  </head>
+  <body>
+    <div class="startup-wait" id="startup-wait" role="status" aria-live="polite">
+      <div class="startup-wait-box">
+        <div class="startup-wait-spinner" aria-hidden="true"></div>
+        <div class="startup-wait-title">正在加载界面</div>
+        <div class="startup-wait-text">请稍后...</div>
+      </div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+}
+
+model product_table {
+  ID          Int     @id @default(autoincrement())
+  Name        String? @db.VarChar(255)
+  Description String? @db.VarChar(255)
+}

@@ -1,0 +1,14 @@
+{
+  "assistants": [
+    {
+      "id": "app-3w1hm5PIuIOsduXVHacmrL8F",
+      "name": "AI助手",
+      "apiBaseUrl": "http://localhost/v1",
+      "apiKey": "app-3w1hm5PIuIOsduXVHacmrL8F",
+      "userId": "desktop-demo-user",
+      "createdAt": "2026-06-22T00:00:00.000Z",
+      "updatedAt": "2026-06-22T00:00:00.000Z"
+    }
+  ],
+  "translationWebUrl": "https://www.wenxiaobai.com/"
+}
