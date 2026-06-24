@@ -28,6 +28,8 @@ type Message = {
   role: Role;
   content: string;
   attachments?: MessageAttachment[];
+  difyMessageId?: string;
+  suggestedQuestions?: string[];
   createdAt: string;
   status?: 'ok' | 'error';
 };

@@ -723,8 +723,6 @@ button {
   align-items: flex-start;
   gap: 12px;
   max-width: 78%;
-  content-visibility: auto;
-  contain-intrinsic-size: 120px;
 }
 
 .message.user {
@@ -768,6 +766,56 @@ button {
   display: grid;
   gap: 8px;
   margin-top: 10px;
+}
+
+.suggested-questions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #edf2f6;
+}
+
+.suggested-questions-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #53687b;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.suggested-questions-title svg {
+  color: #2f6f8f;
+}
+
+.suggested-question-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggested-question {
+  max-width: 100%;
+  min-height: 32px;
+  border: 1px solid #cbd6e2;
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: #1f5f82;
+  background: #f7fbfd;
+  line-height: 1.35;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.suggested-question:hover:not(:disabled) {
+  border-color: #2f6f8f;
+  background: #eef7fa;
+}
+
+.suggested-question:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .attachment-link {
@@ -827,6 +875,21 @@ button {
 
 .message.user .attachment-link small {
   color: #d7edf5;
+}
+
+.message.user .suggested-questions {
+  border-top-color: rgba(255, 255, 255, 0.24);
+}
+
+.message.user .suggested-questions-title,
+.message.user .suggested-questions-title svg {
+  color: #d7edf5;
+}
+
+.message.user .suggested-question {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .bubble.error {

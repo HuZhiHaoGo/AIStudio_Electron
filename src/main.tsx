@@ -5,6 +5,7 @@ import {
   Check,
   Download,
   Languages,
+  Lightbulb,
   MessageSquare,
   MessageSquarePlus,
   Plus,
@@ -443,10 +444,10 @@ function App() {
   }
 
   // 发送消息：先在前端乐观显示用户问题，再等待 Main 返回最新数据。
-  async function sendMessage() {
-    const query = input.trim();
+  async function sendMessage(queryOverride?: string) {
+    const query = (queryOverride ?? input).trim();
 
-    if (!canSend || !selectedAssistant || !selectedConversation || !query) {
+    if (isSending || !selectedAssistant || !selectedConversation || !query) {
       return;
     }
 
@@ -762,6 +763,27 @@ function App() {
                             {attachment.size ? <small>{formatFileSize(attachment.size)}</small> : null}
                           </button>
                         ))}
+                      </div>
+                    ) : null}
+                    {message.role === 'assistant' && message.suggestedQuestions?.length ? (
+                      <div className="suggested-questions" aria-label="推荐追问">
+                        <div className="suggested-questions-title">
+                          <Lightbulb size={15} />
+                          <span>你可以继续问</span>
+                        </div>
+                        <div className="suggested-question-list">
+                          {message.suggestedQuestions.map((question) => (
+                            <button
+                              className="suggested-question"
+                              key={question}
+                              type="button"
+                              disabled={isSending || !selectedConversation}
+                              onClick={() => void sendMessage(question)}
+                            >
+                              {question}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ) : null}
                     <time>{formatTime(message.createdAt)}</time>

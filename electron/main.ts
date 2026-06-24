@@ -46,6 +46,8 @@ type Message = {
   role: Role;
   content: string;
   attachments?: MessageAttachment[];
+  difyMessageId?: string;
+  suggestedQuestions?: string[];
   createdAt: string;
   status?: 'ok' | 'error';
 };
@@ -82,6 +84,7 @@ node_finished
   event?: string;
   answer?: string;
   conversation_id?: string;
+  message_id?: string;
   data?: {
     outputs?: {
       answer?: string;
@@ -136,7 +139,9 @@ type DownloadFileRequest = {
 type SendToDifyResult = {
   answer: string;
   difyConversationId?: string;
+  difyMessageId?: string;
   attachments: MessageAttachment[];
+  suggestedQuestions: string[];
   canceled?: boolean;
 };
 
@@ -148,6 +153,12 @@ function createId() {
 
 function now() {
   return new Date().toISOString();
+}
+
+function wait(milliseconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
 }
 
 function dataFilePath() {
@@ -282,6 +293,7 @@ async function readData(): Promise<AppData> {
       messages: (data.messages || []).map((message) => ({  //map（）的作用：对数组中的每一个元素进行处理，生成一个新的数组。
         ...message,///...message  对象展开运算符，表示将 message 对象的所有属性展开并复制到新的对象中。
         attachments: message.attachments || [],
+        suggestedQuestions: message.suggestedQuestions || [],
       })),
       settings: {
         translationWebUrl: adminConfig.translationWebUrl,
@@ -383,7 +395,9 @@ async function sendToDify(
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
   let answer = '';
+  let finalAnswer = '';
   let nextDifyConversationId: string | undefined;
+  let difyMessageId: string | undefined;
   const attachments: MessageAttachment[] = [];
   const seenAttachmentKeys = new Set<string>();
 
@@ -480,10 +494,14 @@ async function sendToDify(
 
       //解析json字符串，提取回答内容和文件信息。
       const data = JSON.parse(dataLine) as DifyStreamEvent;
-      const outputAnswer = data.data?.outputs?.answer || '';
-      const chunk = normalizeMarkdownFileLinks(data.answer || (!answer ? outputAnswer : ''));
+      const outputAnswer = data.data?.outputs?.answer ? normalizeMarkdownFileLinks(data.data.outputs.answer) : '';
+      const chunk = normalizeMarkdownFileLinks(data.answer || '');
 
       collectFilesFromEvent(data);
+
+      if (outputAnswer) {
+        finalAnswer = outputAnswer;
+      }
 
       /**
        * Dify 的流式回答可能会分多条 SSE 消息返回，answer 变量需要把这些消息的内容拼接起来形成完整回答。每当收到一条新的 SSE 消息时，就把这条消息的内容追加到 answer 里，并通过 IPC 实时发送给 React 页面，这样用户就能看到流式更新的回答内容，而不需要等到完整回答返回后才看到结果。
@@ -500,6 +518,10 @@ async function sendToDify(
 
       if (data.conversation_id) {
         nextDifyConversationId = data.conversation_id;
+      }
+
+      if (data.message_id) {
+        difyMessageId = data.message_id;
       }
     }
   }
@@ -563,7 +585,9 @@ async function sendToDify(
       return {
         answer: answer || '已停止生成。',
         difyConversationId: nextDifyConversationId,
+        difyMessageId,
         attachments,
+        suggestedQuestions: [],
         canceled: true,
       };
     }
@@ -571,11 +595,65 @@ async function sendToDify(
     throw error;
   }
 
+  const suggestedQuestions = difyMessageId
+    ? await fetchSuggestedQuestionsWithRetry(assistant, difyMessageId)
+    : [];
+  const completeAnswer = finalAnswer || answer;
+
   return {
-    answer: answer || `${assistant.name} 返回了空回答。`,
+    answer: completeAnswer || `${assistant.name} 返回了空回答。`,
     difyConversationId: nextDifyConversationId,
+    difyMessageId,
     attachments,
+    suggestedQuestions,
   };
+}
+
+async function fetchSuggestedQuestionsWithRetry(assistant: Assistant, messageId: string) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const questions = await fetchSuggestedQuestions(assistant, messageId);
+
+      if (questions.length || attempt === 2) {
+        return questions;
+      }
+    } catch {
+      if (attempt === 2) {
+        return [];
+      }
+    }
+
+    await wait(350);
+  }
+
+  return [];
+}
+
+async function fetchSuggestedQuestions(assistant: Assistant, messageId: string) {
+  const baseUrl = assistant.apiBaseUrl?.replace(/\/$/, '');
+  const user = encodeURIComponent(assistant.userId || 'desktop-demo-user');
+  const response = await fetch(`${baseUrl}/messages/${encodeURIComponent(messageId)}/suggested?user=${user}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${assistant.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`建议问题获取失败：HTTP ${response.status}`);
+  }
+
+  const body = (await response.json()) as {
+    result?: string;
+    data?: unknown;
+  };
+
+  if (body.result !== 'success' || !Array.isArray(body.data)) {
+    return [];
+  }
+
+  return body.data.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()));
 }
 
 // React 启动时调用：读取助手、会话、消息。
@@ -724,6 +802,8 @@ ipcMain.handle('message:send', async (event, request: SendMessageRequest) => {
       role: 'assistant',
       content: result.answer,
       attachments: result.attachments,
+      difyMessageId: result.difyMessageId,
+      suggestedQuestions: result.suggestedQuestions,
       createdAt: replyTime,
       status: 'ok',
     });
