@@ -22,6 +22,12 @@ type SendMessageRequest = {
   streamId?: string;
 };
 
+type MessageFeedbackRequest = {
+  messageId: string;
+  rating: 'like' | 'dislike' | null;
+  content?: string;
+};
+
 type MessageStreamChunk = {
   streamId: string;
   content: string;
@@ -55,6 +61,9 @@ contextBridge.exposeInMainWorld('difyApi', {
 
   // 停止当前正在进行的 Dify streaming 请求。
   stopMessage: (streamId: string) => ipcRenderer.invoke('message:stop', streamId),
+
+  // 给 Dify 回复提交点赞、点踩或撤销反馈。
+  sendMessageFeedback: (request: MessageFeedbackRequest) => ipcRenderer.invoke('message:feedback', request),
 
   // 弹出系统“另存为”窗口并下载文件。
   downloadFile: (request: DownloadFileRequest) => ipcRenderer.invoke('file:download', request),

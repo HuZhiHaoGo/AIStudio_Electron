@@ -10,11 +10,12 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
-        "resolveJsonModule": true,
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "sourceMap": true
   },
   "include": ["src"]
 }

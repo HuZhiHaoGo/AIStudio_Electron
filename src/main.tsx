@@ -13,6 +13,8 @@ import {
   Send,
   Settings,
   Square,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
   UserRound,
 } from 'lucide-react';
@@ -443,6 +445,25 @@ function App() {
     }
   }
 
+  // 提交 AI 回复的点赞/点踩反馈；再次点击同一个反馈会撤销。
+  async function sendFeedback(message: Message, rating: Exclude<MessageFeedbackRating, null>) {
+    const nextRating = message.feedbackRating === rating ? null : rating;
+
+    setError('');
+
+    try {
+      const nextData = await window.difyApi.sendMessageFeedback({
+        messageId: message.id,
+        rating: nextRating,
+        content: nextRating === 'like' ? '用户认为该回答有帮助' : nextRating === 'dislike' ? '用户认为该回答需要改进' : '',
+      });
+      setData(nextData);
+      setNotice(nextRating ? '反馈已提交' : '反馈已撤销');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '反馈提交失败。');
+    }
+  }
+
   // 发送消息：先在前端乐观显示用户问题，再等待 Main 返回最新数据。
   async function sendMessage(queryOverride?: string) {
     const query = (queryOverride ?? input).trim();
@@ -784,6 +805,28 @@ function App() {
                             </button>
                           ))}
                         </div>
+                      </div>
+                    ) : null}
+                    {message.role === 'assistant' && message.difyMessageId && message.status !== 'error' ? (
+                      <div className="message-feedback" aria-label="消息反馈">
+                        <button
+                          className={`feedback-button ${message.feedbackRating === 'like' ? 'active' : ''}`}
+                          type="button"
+                          title={message.feedbackRating === 'like' ? '撤销点赞' : '点赞'}
+                          onClick={() => void sendFeedback(message, 'like')}
+                        >
+                          <ThumbsUp size={15} />
+                          <span>有帮助</span>
+                        </button>
+                        <button
+                          className={`feedback-button ${message.feedbackRating === 'dislike' ? 'active dislike' : ''}`}
+                          type="button"
+                          title={message.feedbackRating === 'dislike' ? '撤销点踩' : '点踩'}
+                          onClick={() => void sendFeedback(message, 'dislike')}
+                        >
+                          <ThumbsDown size={15} />
+                          <span>需改进</span>
+                        </button>
                       </div>
                     ) : null}
                     <time>{formatTime(message.createdAt)}</time>

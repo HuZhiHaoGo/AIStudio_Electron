@@ -4,6 +4,7 @@ const path = require('node:path');
 const releaseDir = path.resolve(__dirname, '..', 'release');
 const targets = ['win-unpacked', 'win-unpacked.tmp'];
 
+// 删除旧的绿色版打包目录，避免上一次构建残留文件影响本次打包结果。
 async function removeTarget(name) {
   const target = path.join(releaseDir, name);
 

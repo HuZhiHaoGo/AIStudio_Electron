@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 type Role = 'user' | 'assistant';
+type MessageFeedbackRating = 'like' | 'dislike' | null;
 
 type Assistant = {
   id: string;
@@ -30,6 +31,8 @@ type Message = {
   attachments?: MessageAttachment[];
   difyMessageId?: string;
   suggestedQuestions?: string[];
+  feedbackRating?: MessageFeedbackRating;
+  feedbackContent?: string;
   createdAt: string;
   status?: 'ok' | 'error';
 };
@@ -72,6 +75,12 @@ type SendMessageRequest = {
   streamId?: string;
 };
 
+type MessageFeedbackRequest = {
+  messageId: string;
+  rating: MessageFeedbackRating;
+  content?: string;
+};
+
 type MessageStreamChunk = {
   streamId: string;
   content: string;
@@ -100,6 +109,7 @@ interface Window {
     deleteConversation(conversationId: string): Promise<AppData>;
     sendMessage(request: SendMessageRequest): Promise<AppData>;
     stopMessage(streamId: string): Promise<StopMessageResult>;
+    sendMessageFeedback(request: MessageFeedbackRequest): Promise<AppData>;
     downloadFile(request: DownloadFileRequest): Promise<DownloadFileResult>;
     onMessageStreamChunk(callback: (chunk: MessageStreamChunk) => void): () => void;
   };
