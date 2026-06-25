@@ -4,7 +4,7 @@
   "private": true,
   "author": "AIStudio",
   "description": "Electron + React + TypeScript for a Dify robot chat client.",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"node scripts/wait-for-vite.cjs\"",
     "dev:vite": "vite --host 127.0.0.1",

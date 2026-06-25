@@ -159,13 +159,13 @@ npm run prisma:migrate
 | --- | --- | --- |
 | `react` | `^19.0.0` | 前端 UI 框架。`src/main.tsx` 中的组件、状态、事件处理都基于 React。 |
 | `react-dom` | `^19.0.0` | 把 React 组件挂载到 `index.html` 的 `<div id="root"></div>` 上。入口在 `src/main.tsx` 的 `createRoot(...)`。 |
-| `react-markdown` | `^10.1.0` | 把 AI 回复中的 Markdown 文本渲染成 HTML，例如标题、列表、表格、链接。使用位置：`src/MarkdownMessage.tsx`。 |
-| `remark-gfm` | `^4.0.1` | 给 `react-markdown` 增加 GitHub 风格 Markdown 支持，尤其是表格。使用位置：`src/MarkdownMessage.tsx`。 |
-| `lucide-react` | `^0.468.0` | 图标库。项目中的会话、翻译、发送、下载、点赞、点踩等图标都来自它。使用位置：`src/main.tsx`。 |
-| `dotenv` | `^16.4.7` | 读取 `.env` 文件中的环境变量，例如 Dify 默认配置、数据库连接字符串。使用位置：`electron/main.ts`、`electron/db.ts`。 |
+| `react-markdown` | `^10.1.0` | 把 AI 回复中的 Markdown 文本渲染成 HTML，例如标题、列表、表格、链接。使用位置：`src/components/markdown/MarkdownMessage.tsx`。 |
+| `remark-gfm` | `^4.0.1` | 给 `react-markdown` 增加 GitHub 风格 Markdown 支持，尤其是表格。使用位置：`src/components/markdown/MarkdownMessage.tsx`。 |
+| `lucide-react` | `^0.468.0` | 图标库。项目中的会话、翻译、发送、下载、点赞、点踩等图标都来自它。使用位置：`src/components/` 和 `src/App.tsx`。 |
+| `dotenv` | `^16.4.7` | 读取 `.env` 文件中的环境变量，例如 Dify 默认配置、数据库连接字符串。使用位置：`electron/main.ts`、`electron/database/prismaClient.ts`。 |
 | `prisma` | `^7.8.0` | Prisma 命令行工具，用于 `prisma generate`、`prisma db pull`、`prisma migrate`。虽然放在 `dependencies` 中，但主要用于数据库开发和生成客户端。 |
-| `@prisma/client` | `^7.8.0` | Prisma 生成的数据库访问客户端。代码通过它查询或操作数据库。使用位置：`electron/db.ts`。 |
-| `@prisma/adapter-mssql` | `^7.8.0` | Prisma 连接 SQL Server 的适配器。当前项目连接 SQL Server 时使用它。使用位置：`electron/db.ts`。 |
+| `@prisma/client` | `^7.8.0` | Prisma 生成的数据库访问客户端。代码通过它查询或操作数据库。使用位置：`electron/database/prismaClient.ts`。 |
+| `@prisma/adapter-mssql` | `^7.8.0` | Prisma 连接 SQL Server 的适配器。当前项目连接 SQL Server 时使用它。使用位置：`electron/database/prismaClient.ts`。 |
 
 简单理解：
 
@@ -270,8 +270,17 @@ npm uninstall 包名
 
 ```text
 AIStudio_Electron/
-├─ electron/              Electron 主进程和安全桥接代码
+├─ electron/              Electron Main、IPC、服务层、数据库层
+│  ├─ database/           Prisma Client、数据库健康检查
+│  ├─ ipc/                IPC handler 分层
+│  ├─ services/           Dify、本地数据、配置、下载等业务服务
+│  ├─ utils/              通用工具函数
+│  └─ window/             BrowserWindow 创建和路径管理
+├─ shared/                Electron 和 React 共享 TypeScript 类型
 ├─ src/                   React 前端页面代码
+│  ├─ components/         UI 组件
+│  ├─ hooks/              前端状态逻辑
+│  └─ services/           前端 API client
 ├─ prisma/                Prisma 数据库模型
 ├─ config/                管理员配置
 ├─ scripts/               开发和打包辅助脚本
@@ -299,7 +308,7 @@ AIStudio_Electron/
 - `scripts`：定义 `npm run dev`、`npm run build`、`npm run pack:dir` 等命令。
 - `dependencies`：运行时依赖，例如 React、Electron、Prisma、react-markdown。
 - `devDependencies`：开发和构建依赖，例如 TypeScript、Vite、electron-builder。
-- `main`：Electron 启动入口，当前为 `dist-electron/main.js`。
+- `main`：Electron 启动入口，当前为 `dist-electron/electron/main.js`。
 - `build`：electron-builder 打包配置，包括应用名称、图标、输出目录、额外资源。
 
 ### 2. `index.html`
@@ -348,67 +357,68 @@ AIStudio_Electron/
 
 ### 6. `electron/main.ts`
 
-作用：Electron 主进程，是桌面程序真正的“后端”。
+作用：Electron 主进程入口。
 
-它负责：
+重构后它只负责：
 
-- 创建桌面窗口。
-- 读取管理员配置。
-- 读写本地会话数据。
-- 调用 Dify 接口。
-- 下载文件。
-- 停止流式请求。
-- 提交消息反馈。
-- 把数据通过 IPC 返回给 React。
+- 读取 `.env`。
+- 设置 Electron 全局开关。
+- 注册 IPC handlers。
+- 创建窗口。
+- 监听窗口关闭。
 
-主要类型：
+它不再直接写 Dify 请求、本地 JSON 读写、文件下载、数据库逻辑。
 
-- `Assistant`：一个 Dify 助手配置。
-- `Conversation`：一个聊天会话。
-- `Message`：一条聊天消息。
-- `MessageAttachment`：消息附件。
-- `DifyStreamEvent`：Dify streaming 返回事件。
-- `AppData`：应用本地数据总结构。
+### 7. `electron/window/`
 
-主要函数：
+作用：窗口相关逻辑。
 
-- `createId()`：生成唯一 ID。
-- `now()`：返回当前时间的 ISO 字符串。
-- `wait(milliseconds)`：等待一段时间，主要用于建议问题接口重试。
-- `dataFilePath()`：获取用户聊天数据文件路径。
-- `windowIconPath()`：获取窗口图标路径。
-- `adminConfigPath()`：获取管理员配置文件路径。
-- `safeFilename(value)`：把文件名中的非法字符替换掉，避免保存失败。
-- `maskKey(apiKey)`：隐藏 API Key 的中间部分，避免前端看到真实 Key。
-- `publicData(data)`：返回给前端的数据版本，会脱敏 API Key。
-- `defaultData()`：生成默认本地数据结构。
-- `defaultAdminConfig()`：生成默认管理员配置。
-- `normalizeAdminConfig(config)`：补全管理员配置中的缺省字段。
-- `readAdminConfig()`：读取 `config/app-config.json`。
-- `readData()`：读取用户本地会话和消息，并合并管理员配置。
-- `writeData(data)`：保存用户本地会话和消息。
-- `createWindow()`：创建 Electron 桌面窗口。
-- `sendToDify(...)`：发送用户问题到 Dify，并处理 streaming 返回。
-- `fetchSuggestedQuestionsWithRetry(...)`：带重试地获取下一轮建议问题。
-- `fetchSuggestedQuestions(...)`：调用 Dify 建议问题接口。
-- `sendDifyMessageFeedback(...)`：调用 Dify 点赞/点踩接口。
+主要文件：
 
-主要 IPC：
+- `createWindow.ts`：创建 `BrowserWindow`，加载 Vite 或生产 HTML，设置 `Ctrl + Shift + I` 打开 DevTools，拦截外部链接。
+- `windowPaths.ts`：管理窗口图标、管理员配置、本地数据文件等路径。
 
-- `app:get-data`：前端读取完整数据。
-- `conversation:create`：创建新会话。
-- `conversation:delete`：删除会话。
-- `file:download`：下载 Dify 返回的文件。
-- `message:stop`：停止当前 Dify streaming 请求。
-- `message:feedback`：提交点赞/点踩反馈。
-- `message:send`：发送消息到 Dify。
+### 8. `electron/services/`
 
-程序入口：
+作用：Electron Main 中的业务服务层。
 
-- `app.whenReady().then(...)`：Electron 准备好后创建窗口。
-- `app.on('window-all-closed', ...)`：窗口全部关闭后退出应用。
+主要文件：
 
-### 7. `electron/preload.ts`
+- `adminConfigService.ts`：读取和规范化 `config/app-config.json`。
+- `appDataService.ts`：读写 `aistudio-data.json`，合并管理员配置，返回脱敏数据。
+- `difyService.ts`：调用 Dify `/chat-messages`、解析 streaming、获取建议问题、提交点赞/点踩。
+- `downloadService.ts`：弹出系统另存为窗口，下载远程文件并保存。
+
+### 9. `electron/ipc/`
+
+作用：IPC 分层。React 前端通过 preload 调用 Main，具体处理逻辑在这里注册。
+
+主要文件：
+
+- `registerIpcHandlers.ts`：统一注册所有 IPC。
+- `appHandlers.ts`：处理 `app:get-data`。
+- `conversationHandlers.ts`：处理 `conversation:create`、`conversation:delete`。
+- `messageHandlers.ts`：处理 `message:send`、`message:stop`、`message:feedback`。
+- `fileHandlers.ts`：处理 `file:download`。
+
+### 10. `electron/database/` 和 `electron/db.ts`
+
+作用：Prisma / SQL Server 数据库层。
+
+主要文件：
+
+- `database/prismaClient.ts`：创建 Prisma Client 和 SQL Server adapter。
+- `database/health.ts`：数据库连接检查和断开连接。
+- `db.ts`：兼容出口，统一导出 `prisma`、`checkDatabaseConnection`、`closeDatabaseConnection`。
+
+后续如果增加文件任务、权限、审计日志，建议继续增加：
+
+```text
+electron/database/repositories/
+electron/database/services/
+```
+
+### 11. `electron/preload.ts`
 
 作用：安全桥接层。
 
@@ -427,88 +437,55 @@ React 前端不能直接调用 Node.js 或 Electron Main。`preload.ts` 使用 `
 - `downloadFile(request)`：下载文件。
 - `onMessageStreamChunk(callback)`：监听 Dify streaming 片段。
 
-### 8. `electron/db.ts`
+### 12. `shared/types/`
 
-作用：Prisma 数据库入口。
+作用：前后端共享 TypeScript 类型。
 
-当前数据库类型：SQL Server。
+主要文件：
 
-主要函数：
+- `app.ts`：`Assistant`、`Conversation`、`Message`、`AppData` 等业务类型。
+- `dify.ts`：Dify streaming、文件、返回结果相关类型。
+- `ipc.ts`：Preload 暴露给前端的请求、响应和 `DifyApiBridge` 类型。
 
-- `databaseUrl()`：读取 `.env` 中的 `DATABASE_URL`。
-- `prisma`：全局 Prisma Client 实例。
-- `checkDatabaseConnection()`：执行 `SELECT 1` 检查数据库连接。
-- `closeDatabaseConnection()`：关闭数据库连接。
+### 13. `src/main.tsx` 和 `src/App.tsx`
 
-### 9. `src/main.tsx`
+作用：React 前端入口和主页面。
 
-作用：React 前端主页面。
+- `main.tsx`：只负责把 `<App />` 挂载到 `index.html` 的 `root`。
+- `App.tsx`：负责组合页面状态、会话数据、发送消息、下载、反馈等核心页面逻辑。
 
-它负责：
+### 14. `src/components/`
 
-- 渲染左侧导航。
-- 渲染会话列表。
-- 渲染聊天窗口。
-- 处理输入框。
-- 展示流式回复。
-- 展示附件下载。
-- 展示下一轮建议问题。
-- 展示点赞/点踩按钮。
-- 渲染翻译 Web 页面。
+作用：前端 UI 组件层。
 
-外部辅助函数：
+当前已拆分：
 
-- `formatTime(value)`：把时间格式化成界面显示格式。
-- `formatFileSize(size)`：把文件大小格式化成 B、KB、MB。
-- `normalizeWebUrl(value)`：补全翻译网页地址。
-- `hideStartupWait()`：页面数据加载完成后隐藏启动等待框。
+- `layout/Sidebar.tsx`：左侧导航。
+- `layout/StatusBanner.tsx`：成功/失败提示条。
+- `chat/MessageAttachments.tsx`：消息附件下载。
+- `chat/SuggestedQuestions.tsx`：下一轮建议问题。
+- `chat/MessageFeedback.tsx`：点赞/点踩。
+- `chat/MessageComposer.tsx`：底部输入框和发送/停止按钮。
+- `markdown/MarkdownMessage.tsx`：Markdown 渲染。
+- `translate/TranslateWorkspace.tsx`：翻译 Web 页面。
 
-`App()` 内部主要状态：
+### 15. `src/hooks/`
 
-- `data`：助手、会话、消息、设置的总数据。
-- `selectedAssistantId`：当前选中的助手。
-- `selectedConversationId`：当前选中的会话。
-- `activeView`：当前页面，是会话还是翻译。
-- `input`：输入框内容。
-- `isSending`：是否正在请求 AI。
-- `streamingContent`：正在流式显示的 AI 回复内容。
-- `notice` / `error`：界面提示信息。
+作用：前端状态逻辑层。
 
-`App()` 内部主要函数：
+当前已拆分：
 
-- `isNearBottom(element)`：判断聊天区是否接近底部。
-- `scrollMessagesToBottom(behavior)`：滚动到聊天底部。
-- `setScrollToBottomVisibility(isVisible)`：控制“回到底部”按钮显示。
-- `clearStatus()`：清空提示信息。
-- `renderStatusBanner()`：渲染提示条。
-- `handleMessagesScroll()`：处理聊天区滚动事件。
-- `updateMessagesScrollState()`：更新是否贴近底部的状态。
-- `loadData()`：从 Main 读取本地数据。
-- `saveAssistant()`：保存助手配置。当前界面已隐藏该入口。
-- `saveSettings()`：保存翻译 Web 设置。当前界面已隐藏该入口。
-- `createAssistantDraft()`：创建助手草稿。当前界面已隐藏该入口。
-- `createConversation()`：创建新会话。
-- `deleteConversation(conversationId)`：删除会话。
-- `downloadFile(url, filename)`：下载附件。
-- `stopCurrentMessage()`：停止当前 AI 回复。
-- `sendFeedback(message, rating)`：提交点赞或点踩。
-- `sendMessage(queryOverride)`：发送用户问题，或发送推荐追问。
+- `useStatusMessage.ts`：提示信息和 5 秒自动关闭。
+- `useMessageStreaming.ts`：Dify streaming 监听、流式内容、动态加载点。
+- `useScrollToBottom.ts`：聊天滚动状态、回到底部按钮。
 
-### 10. `src/MarkdownMessage.tsx`
+### 16. `src/services/difyApiClient.ts`
 
-作用：封装 Markdown 渲染组件。
+作用：前端 API client 层。
 
-主要函数：
+它封装 `window.difyApi`，让组件和 hooks 不直接散落调用全局对象。后续如果从 Electron IPC 改成 HTTP 后端 API，优先改这里。
 
-- `getTextContent(value)`：从 React 子节点中提取纯文本，用于文件下载时推断文件名。
-- `MarkdownMessage(...)`：使用 `ReactMarkdown` 渲染 AI 回复内容。
-
-特殊处理：
-
-- 如果 Markdown 链接中包含 `/files/`，点击时不会打开浏览器。
-- 它会调用 `onDownloadFile`，由 Electron Main 弹出“另存为”窗口下载。
-
-### 11. `src/styles.css`
+### 17. `src/styles.css`
 
 作用：主界面样式文件。
 
@@ -525,30 +502,24 @@ React 前端不能直接调用 Node.js 或 Electron Main。`preload.ts` 使用 `
 - 输入框和发送按钮。
 - 翻译 Web 页面。
 
-### 12. `src/startup.css`
+### 18. `src/startup.css`
 
 作用：启动等待框样式。
 
 在 React 数据还没有加载完成前，`index.html` 会先展示“正在加载界面，请稍后...”。当 `loadData()` 完成后，React 调用 `hideStartupWait()` 移除这个等待框。
 
-### 13. `src/vite-env.d.ts`
+### 19. `src/vite-env.d.ts`
 
 作用：前端全局类型声明。
 
-它定义了：
+它主要声明：
 
-- `Assistant`
-- `Conversation`
-- `Message`
-- `MessageAttachment`
-- `AppData`
 - `Window.difyApi`
+- `webview` JSX 标签
 
-为什么 `main.tsx` 能直接使用这些类型？
+业务类型已经移动到 `shared/types/`。
 
-因为 `.d.ts` 是 TypeScript 的声明文件。只要它被 `tsconfig.json` 包含，项目中的 TS/TSX 文件就能识别其中定义的全局类型。
-
-### 14. `prisma/schema.prisma`
+### 20. `prisma/schema.prisma`
 
 作用：Prisma 数据库模型文件。
 
@@ -560,7 +531,7 @@ React 前端不能直接调用 Node.js 或 Electron Main。`preload.ts` 使用 `
 
 如果以后数据库表越来越多，通常需要在这里继续增加模型，或者用 `npm run prisma:pull` 从现有数据库反向生成。
 
-### 15. `prisma.config.ts`
+### 21. `prisma.config.ts`
 
 作用：Prisma 7 的配置文件。
 
@@ -570,7 +541,7 @@ React 前端不能直接调用 Node.js 或 Electron Main。`preload.ts` 使用 `
 - 从 `.env` 读取 `DATABASE_URL`。
 - 指定 migrations 目录。
 
-### 16. `config/app-config.json`
+### 22. `config/app-config.json`
 
 作用：管理员配置文件。
 
@@ -599,7 +570,7 @@ React 前端不能直接调用 Node.js 或 Electron Main。`preload.ts` 使用 `
 - 管理员改这里即可。
 - 打包后该文件会复制到 `resources/config/app-config.json`。
 
-### 17. `scripts/wait-for-vite.cjs`
+### 23. `scripts/wait-for-vite.cjs`
 
 作用：开发启动辅助脚本。
 
@@ -620,7 +591,7 @@ wait-for-vite 等待 5173 端口可连接
 启动 Electron
 ```
 
-### 18. `scripts/clean-release.cjs`
+### 24. `scripts/clean-release.cjs`
 
 作用：打包前清理旧产物。
 
@@ -628,13 +599,13 @@ wait-for-vite 等待 5173 端口可连接
 
 - `removeTarget(name)`：删除 `release/win-unpacked` 和 `release/win-unpacked.tmp`。
 
-### 19. `build/app-icon.ico`
+### 25. `build/app-icon.ico`
 
 作用：Windows 应用和窗口图标。
 
 它在 `package.json` 的 `build.win.icon` 中被使用。
 
-### 20. `src/LOGO/`
+### 26. `src/LOGO/`
 
 作用：存放前端界面使用的 logo 图片。
 
@@ -644,7 +615,7 @@ wait-for-vite 等待 5173 端口可连接
 import tbeaLogo from './LOGO/TBEA3.png';
 ```
 
-### 21. `.env` 和 `.env.example`
+### 27. `.env` 和 `.env.example`
 
 `.env.example` 是示例配置，适合提交到代码仓库。
 
@@ -659,7 +630,7 @@ DIFY_USER_ID=desktop-demo-user
 DATABASE_URL="sqlserver://localhost:1433;database=aistudio;user=sa;password=your_password;trustServerCertificate=true"
 ```
 
-### 22. `setup.bat`
+### 28. `setup.bat`
 
 作用：Windows 下双击安装依赖。
 
@@ -669,7 +640,7 @@ DATABASE_URL="sqlserver://localhost:1433;database=aistudio;user=sa;password=your
 npm install
 ```
 
-### 23. `start-dev.bat`
+### 29. `start-dev.bat`
 
 作用：Windows 下双击开发启动。
 
@@ -679,7 +650,7 @@ npm install
 npm run dev
 ```
 
-### 24. `pack-dir.bat`
+### 30. `pack-dir.bat`
 
 作用：Windows 下双击打包绿色版。
 
@@ -689,7 +660,7 @@ npm run dev
 npm run pack:dir
 ```
 
-### 25. `package-lock.json`
+### 31. `package-lock.json`
 
 作用：锁定依赖的精确版本。
 
@@ -697,7 +668,7 @@ npm run pack:dir
 
 一般不手动修改它。安装、卸载、升级依赖时它会自动变化。
 
-### 26. `.gitignore`
+### 32. `.gitignore`
 
 作用：告诉 Git 哪些文件不要提交。
 
@@ -709,19 +680,19 @@ npm run pack:dir
 - `release/`
 - `.env`
 
-### 27. `docs/PROJECT_GUIDE.md`
+### 33. `docs/PROJECT_GUIDE.md`
 
 作用：项目补充说明文档。
 
 如果 README 是总说明，那么 `docs/PROJECT_GUIDE.md` 可以放更细的开发记录、二次开发说明或业务设计文档。
 
-### 28. `.vscode/`
+### 34. `.vscode/`
 
 作用：VS Code 编辑器配置目录。
 
 它可能包含编辑器推荐设置、调试配置等。不是程序运行必需文件。
 
-### 29. `dist/`、`dist-electron/`、`release/`
+### 35. `dist/`、`dist-electron/`、`release/`
 
 这些是构建或打包后生成的目录。
 
@@ -833,11 +804,12 @@ React 高亮对应按钮
 
 1. 先看 `package.json`，理解有哪些命令。
 2. 再看 `index.html`，理解 React 页面挂载点。
-3. 看 `src/main.tsx`，理解界面长什么样。
-4. 看 `electron/preload.ts`，理解前端如何调用后端能力。
-5. 看 `electron/main.ts`，理解本地数据和 Dify 请求。
-6. 看 `src/MarkdownMessage.tsx`，理解 Markdown 和文件下载。
-7. 最后看 `electron/db.ts` 和 `prisma/schema.prisma`。
+3. 看 `src/App.tsx`，理解主页面如何组合数据和组件。
+4. 看 `src/components/`，理解界面如何拆成组件。
+5. 看 `src/hooks/`，理解流式消息、提示、滚动等状态逻辑。
+6. 看 `electron/preload.ts`，理解前端如何调用后端能力。
+7. 看 `electron/ipc/` 和 `electron/services/`，理解 IPC 如何调用业务服务。
+8. 最后看 `electron/database/`、`electron/db.ts` 和 `prisma/schema.prisma`。
 
 建议每次改动后执行：
 

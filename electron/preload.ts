@@ -1,42 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type {
+  DownloadFileRequest,
+  MessageFeedbackRequest,
+  MessageStreamChunk,
+  SaveAssistantRequest,
+  SaveSettingsRequest,
+  SendMessageRequest,
+} from '../shared/types/ipc';
 
 // preload 运行在 Electron 的隔离环境里。
 // 它的作用是：只把前端需要的少量能力暴露出去，避免 React 直接接触 Node.js 能力。
-
-type SaveAssistantRequest = {
-  id?: string;
-  name: string;
-  apiBaseUrl: string;
-  apiKey: string;
-  userId: string;
-};
-
-type SaveSettingsRequest = {
-  translationWebUrl: string;
-};
-
-type SendMessageRequest = {
-  assistantId: string;
-  conversationId: string;
-  query: string;
-  streamId?: string;
-};
-
-type MessageFeedbackRequest = {
-  messageId: string;
-  rating: 'like' | 'dislike' | null;
-  content?: string;
-};
-
-type MessageStreamChunk = {
-  streamId: string;
-  content: string;
-};
-
-type DownloadFileRequest = {
-  url: string;
-  filename?: string;
-};
 
 // contextBridge.exposeInMainWorld 会在 React 页面里创建 window.difyApi。
 // React 只能通过这些方法和 Electron Main 通信。
