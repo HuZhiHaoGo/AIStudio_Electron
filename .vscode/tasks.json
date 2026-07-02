@@ -32,6 +32,12 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": "$tsc"
+    },
+    {
+      "label": "Prepare Debug App",
+      "dependsOn": ["Compile Electron Main", "Start Vite Dev Server"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     }
   ]
 }
