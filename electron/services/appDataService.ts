@@ -28,9 +28,11 @@ export function publicData(data: AppData) {
 
 export function defaultData(): AppData {
   return {
+    schemaVersion: 2,
     assistants: [],
     conversations: [],
     messages: [],
+    annotations: [],
     settings: {
       translationWebUrl: '',
     },
@@ -46,6 +48,7 @@ export async function readData(): Promise<AppData> {
     const data = JSON.parse(content) as AppData;
 
     return {
+      schemaVersion: 2,
       assistants: adminConfig.assistants,
       conversations: data.conversations || [],
       messages: (data.messages || []).map((message) => ({
@@ -54,12 +57,21 @@ export async function readData(): Promise<AppData> {
         suggestedQuestions: message.suggestedQuestions || [],
         feedbackRating: message.feedbackRating ?? null,
         feedbackContent: message.feedbackContent || '',
+        traces: message.traces || [],
+        citations: message.citations || [],
       })),
+      annotations: data.annotations || [],
       settings: {
         translationWebUrl: adminConfig.translationWebUrl,
       },
     };
-  } catch {
+  } catch (error) {
+    const errorCode = error && typeof error === 'object' && 'code' in error ? error.code : '';
+    if (error instanceof SyntaxError) {
+      await fs.rename(filePath, `${filePath}.corrupt-${Date.now()}`).catch(() => undefined);
+    } else if (errorCode && errorCode !== 'ENOENT') {
+      throw new Error(`本地数据读取失败：${filePath}`);
+    }
     const data = {
       ...defaultData(),
       assistants: adminConfig.assistants,
@@ -75,9 +87,11 @@ export async function readData(): Promise<AppData> {
 export async function writeData(data: AppData) {
   const filePath = dataFilePath();
   const storedData: AppData = {
+    schemaVersion: 2,
     assistants: [],
     conversations: data.conversations,
     messages: data.messages,
+    annotations: data.annotations,
     settings: {
       translationWebUrl: '',
     },

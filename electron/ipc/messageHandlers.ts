@@ -1,7 +1,11 @@
 import { ipcMain } from 'electron';
-import type { MessageFeedbackRequest, SendMessageRequest } from '../../shared/types/ipc';
+import type {
+  AnnotationRequest, DeleteAnnotationRequest, HitlSubmitRequest, MessageFeedbackRequest, SendMessageRequest,
+} from '../../shared/types/ipc';
 import { publicData, readData, writeData } from '../services/appDataService';
-import { sendDifyMessageFeedback, sendToDify } from '../services/difyService';
+import {
+  createDifyAnnotation, deleteDifyAnnotation, resumeDifyWorkflow, runDifyApp, sendDifyMessageFeedback, submitDifyHitl,
+} from '../services/dify/client';
 import { createId } from '../utils/id';
 import { now } from '../utils/time';
 
@@ -10,130 +14,116 @@ const activeDifyRequests = new Map<string, AbortController>();
 export function registerMessageHandlers() {
   ipcMain.handle('message:stop', async (_event, streamId: string) => {
     const controller = activeDifyRequests.get(streamId);
-
-    if (!controller) {
-      return {
-        stopped: false,
-      };
-    }
-
+    if (!controller) return { stopped: false };
     controller.abort();
     activeDifyRequests.delete(streamId);
+    return { stopped: true };
+  });
 
-    return {
-      stopped: true,
-    };
+  ipcMain.handle('message:send', async (event, request: SendMessageRequest) => {
+    const query = request.query.trim();
+    const data = await readData();
+    const assistant = data.assistants.find((item) => item.id === request.assistantId);
+    const conversation = data.conversations.find((item) => item.id === request.conversationId);
+    if (!assistant || !conversation) throw new Error('未找到当前助手或会话。');
+    if (!query && assistant.mode !== 'workflow') throw new Error('请输入要发送的内容。');
+
+    const currentTime = now();
+    conversation.inputs = request.inputs || conversation.inputs || {};
+    data.messages.push({
+      id: createId(), conversationId: conversation.id, role: 'user', content: query || '运行工作流',
+      attachments: request.files || [], createdAt: currentTime, status: 'ok',
+    });
+    if (conversation.title === '新会话') conversation.title = (query || assistant.name).slice(0, 24);
+
+    const controller = new AbortController();
+    if (request.streamId) activeDifyRequests.set(request.streamId, controller);
+    try {
+      const result = await runDifyApp(assistant, {
+        query, conversationId: conversation.difyConversationId, inputs: conversation.inputs, files: request.files,
+      }, { streamId: request.streamId, sender: event.sender, signal: controller.signal });
+      const replyTime = now();
+      conversation.difyConversationId = result.difyConversationId || conversation.difyConversationId;
+      conversation.updatedAt = replyTime;
+      data.messages.push({
+        id: createId(), conversationId: conversation.id, role: 'assistant',
+        content: result.answer || (result.hitl ? '工作流等待人工处理。' : `${assistant.name} 返回了空结果。`),
+        attachments: result.attachments, difyMessageId: result.difyMessageId, taskId: result.taskId,
+        suggestedQuestions: result.suggestedQuestions, traces: result.traces, citations: result.citations, hitl: result.hitl,
+        createdAt: replyTime, status: result.hitl ? 'paused' : 'ok',
+      });
+    } catch (error) {
+      const replyTime = now();
+      conversation.updatedAt = replyTime;
+      data.messages.push({
+        id: createId(), conversationId: conversation.id, role: 'assistant',
+        content: `发送失败：${error instanceof Error ? error.message : '未知错误'}`,
+        createdAt: replyTime, status: 'error',
+      });
+    } finally {
+      if (request.streamId) activeDifyRequests.delete(request.streamId);
+    }
+    data.conversations.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    await writeData(data);
+    return publicData(data);
   });
 
   ipcMain.handle('message:feedback', async (_event, request: MessageFeedbackRequest) => {
     const data = await readData();
     const message = data.messages.find((item) => item.id === request.messageId);
-
-    if (!message || message.role !== 'assistant') {
-      throw new Error('未找到可反馈的 AI 回复。');
-    }
-
-    if (!message.difyMessageId) {
-      throw new Error('当前消息缺少 Dify message_id，无法提交反馈。');
-    }
-
-    const conversation = data.conversations.find((item) => item.id === message.conversationId);
+    const conversation = data.conversations.find((item) => item.id === message?.conversationId);
     const assistant = data.assistants.find((item) => item.id === conversation?.assistantId);
-
-    if (!assistant) {
-      throw new Error('未找到当前助手配置。');
-    }
-
-    const content = request.content?.trim() || '';
-    await sendDifyMessageFeedback(assistant, message.difyMessageId, request.rating, content);
-
+    if (!message || !assistant || !message.difyMessageId) throw new Error('当前消息无法提交反馈。');
+    await sendDifyMessageFeedback(assistant, message.difyMessageId, request.rating, request.content?.trim() || '');
     message.feedbackRating = request.rating;
-    message.feedbackContent = content;
+    message.feedbackContent = request.content?.trim() || '';
     await writeData(data);
-
     return publicData(data);
   });
 
-  ipcMain.handle('message:send', async (event, request: SendMessageRequest) => {
-    const query = request.query.trim();
+  ipcMain.handle('message:annotate', async (_event, request: AnnotationRequest) => {
+    const data = await readData();
+    const message = data.messages.find((item) => item.id === request.messageId);
+    const conversation = data.conversations.find((item) => item.id === message?.conversationId);
+    const assistant = data.assistants.find((item) => item.id === conversation?.assistantId);
+    if (!message || !assistant) throw new Error('未找到要标注的消息。');
+    const annotation = await createDifyAnnotation(assistant, request.question, request.answer);
+    data.annotations.push(annotation);
+    message.annotationId = annotation.id;
+    await writeData(data);
+    return publicData(data);
+  });
 
-    if (!query) {
-      throw new Error('请输入要发送的内容。');
-    }
-
+  ipcMain.handle('annotation:delete', async (_event, request: DeleteAnnotationRequest) => {
     const data = await readData();
     const assistant = data.assistants.find((item) => item.id === request.assistantId);
-    const conversation = data.conversations.find((item) => item.id === request.conversationId);
+    if (!assistant) throw new Error('未找到助手。');
+    await deleteDifyAnnotation(assistant, request.annotationId);
+    data.annotations = data.annotations.filter((item) => item.id !== request.annotationId);
+    for (const message of data.messages) if (message.annotationId === request.annotationId) delete message.annotationId;
+    await writeData(data);
+    return publicData(data);
+  });
 
-    if (!assistant) {
-      throw new Error('未找到当前助手配置。');
+  ipcMain.handle('message:hitl-submit', async (_event, request: HitlSubmitRequest) => {
+    const data = await readData();
+    const message = data.messages.find((item) => item.id === request.messageId);
+    const conversation = data.conversations.find((item) => item.id === message?.conversationId);
+    const assistant = data.assistants.find((item) => item.id === conversation?.assistantId);
+    if (!message?.hitl || !assistant) throw new Error('未找到待处理的人工介入请求。');
+    await submitDifyHitl(assistant, message.hitl.formToken, request.inputs, request.action);
+    message.hitl.submitted = true;
+    if (message.hitl.taskId) {
+      const result = await resumeDifyWorkflow(assistant, message.hitl.taskId);
+      message.content = result.answer || message.content;
+      message.attachments = [...(message.attachments || []), ...result.attachments];
+      message.traces = [...(message.traces || []), ...result.traces];
+      message.citations = [...(message.citations || []), ...result.citations];
+      message.hitl = result.hitl || message.hitl;
+      message.status = result.hitl ? 'paused' : 'ok';
+    } else {
+      message.status = 'ok';
     }
-
-    if (!conversation) {
-      throw new Error('未找到当前会话。');
-    }
-
-    const currentTime = now();
-    data.messages.push({
-      id: createId(),
-      conversationId: conversation.id,
-      role: 'user',
-      content: query,
-      createdAt: currentTime,
-      status: 'ok',
-    });
-
-    if (conversation.title === '新会话') {
-      conversation.title = query.length > 18 ? `${query.slice(0, 18)}...` : query;
-    }
-
-    const abortController = request.streamId ? new AbortController() : undefined;
-
-    if (request.streamId && abortController) {
-      activeDifyRequests.set(request.streamId, abortController);
-    }
-
-    try {
-      const result = await sendToDify(assistant, query, conversation.difyConversationId, {
-        streamId: request.streamId,
-        sender: event.sender,
-        signal: abortController?.signal,
-      });
-      const replyTime = now();
-
-      conversation.difyConversationId = result.difyConversationId || conversation.difyConversationId;
-      conversation.updatedAt = replyTime;
-      data.messages.push({
-        id: createId(),
-        conversationId: conversation.id,
-        role: 'assistant',
-        content: result.answer,
-        attachments: result.attachments,
-        difyMessageId: result.difyMessageId,
-        suggestedQuestions: result.suggestedQuestions,
-        createdAt: replyTime,
-        status: 'ok',
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '发送失败，请检查 Dify 配置。';
-      const replyTime = now();
-
-      conversation.updatedAt = replyTime;
-      data.messages.push({
-        id: createId(),
-        conversationId: conversation.id,
-        role: 'assistant',
-        content: `发送失败：${errorMessage}`,
-        createdAt: replyTime,
-        status: 'error',
-      });
-    } finally {
-      if (request.streamId) {
-        activeDifyRequests.delete(request.streamId);
-      }
-    }
-
-    data.conversations.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     await writeData(data);
     return publicData(data);
   });

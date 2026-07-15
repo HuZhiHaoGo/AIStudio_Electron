@@ -16,10 +16,12 @@ export function MessageAttachments({ attachments, formatFileSize, onDownloadFile
     <div className="message-attachments" aria-label="附件">
       {attachments.map((attachment) => (
         <button
-          className="attachment-link"
+          className={`attachment-link ${attachment.url ? '' : 'disabled'}`}
           key={attachment.id}
           type="button"
-          onClick={() => onDownloadFile(attachment.url, attachment.name)}
+          disabled={!attachment.url}
+          title={attachment.url ? '下载文件' : '文件已上传'}
+          onClick={() => attachment.url && onDownloadFile(attachment.url, attachment.name)}
         >
           <Download size={16} />
           <span>{attachment.name}</span>

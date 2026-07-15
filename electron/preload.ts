@@ -1,11 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type {
   DownloadFileRequest,
+  AnnotationRequest,
+  DeleteAnnotationRequest,
+  HitlSubmitRequest,
   MessageFeedbackRequest,
   MessageStreamChunk,
   SaveAssistantRequest,
   SaveSettingsRequest,
   SendMessageRequest,
+  UploadFileRequest,
 } from '../shared/types/ipc';
 
 // preload 运行在 Electron 的隔离环境里。
@@ -22,21 +26,29 @@ contextBridge.exposeInMainWorld('difyApi', {
 
   // 保存全局设置。
   saveSettings: (request: SaveSettingsRequest) => ipcRenderer.invoke('settings:save', request),
+  refreshAssistant: (request: { assistantId: string }) => ipcRenderer.invoke('assistant:refresh', request),
+  refreshAllAssistants: () => ipcRenderer.invoke('assistant:refresh-all'),
 
   // 为某个助手创建新会话。
   createConversation: (assistantId: string) => ipcRenderer.invoke('conversation:create', assistantId),
+  renameConversation: (request: { conversationId: string; title: string }) => ipcRenderer.invoke('conversation:rename', request),
 
   // 删除会话以及会话下的消息。
   deleteConversation: (conversationId: string) => ipcRenderer.invoke('conversation:delete', conversationId),
+  syncConversations: (request: { assistantId: string }) => ipcRenderer.invoke('conversation:sync', request),
 
   // 发送消息给 Main，由 Main 保存记录并调用 Dify。
   sendMessage: (request: SendMessageRequest) => ipcRenderer.invoke('message:send', request),
 
   // 停止当前正在进行的 Dify streaming 请求。
   stopMessage: (streamId: string) => ipcRenderer.invoke('message:stop', streamId),
+  uploadFile: (request: UploadFileRequest) => ipcRenderer.invoke('file:upload', request),
 
   // 给 Dify 回复提交点赞、点踩或撤销反馈。
   sendMessageFeedback: (request: MessageFeedbackRequest) => ipcRenderer.invoke('message:feedback', request),
+  createAnnotation: (request: AnnotationRequest) => ipcRenderer.invoke('message:annotate', request),
+  deleteAnnotation: (request: DeleteAnnotationRequest) => ipcRenderer.invoke('annotation:delete', request),
+  submitHitl: (request: HitlSubmitRequest) => ipcRenderer.invoke('message:hitl-submit', request),
 
   // 弹出系统“另存为”窗口并下载文件。
   downloadFile: (request: DownloadFileRequest) => ipcRenderer.invoke('file:download', request),

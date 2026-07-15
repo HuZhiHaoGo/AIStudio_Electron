@@ -1,6 +1,50 @@
 export type Role = 'user' | 'assistant';
-
 export type MessageFeedbackRating = 'like' | 'dislike' | null;
+export type DifyAppMode = 'chat' | 'advanced-chat' | 'agent-chat' | 'workflow' | 'completion';
+export type DifyInputType = 'text-input' | 'paragraph' | 'select' | 'number' | 'file' | 'file-list';
+export type MessageStatus = 'ok' | 'error' | 'streaming' | 'paused';
+
+export type DifyInputField = {
+  type: DifyInputType;
+  variable: string;
+  label: string;
+  required: boolean;
+  default?: string | number;
+  options?: string[];
+  maxLength?: number;
+  allowedFileTypes?: string[];
+  allowedFileExtensions?: string[];
+};
+
+export type DifyFileCapabilities = {
+  enabled: boolean;
+  allowedFileTypes: string[];
+  allowedFileExtensions: string[];
+  allowedUploadMethods: Array<'local_file' | 'remote_url'>;
+  numberLimits: number;
+  fileSizeLimitMb?: number;
+  imageFileSizeLimitMb?: number;
+  audioFileSizeLimitMb?: number;
+  videoFileSizeLimitMb?: number;
+};
+
+export type DifyCapabilities = {
+  loaded: boolean;
+  supportsConversation: boolean;
+  supportsWorkflow: boolean;
+  supportsCompletion: boolean;
+  supportsFileUpload: boolean;
+  supportsFeedback: boolean;
+  supportsSuggestedQuestions: boolean;
+  supportsSpeechToText: boolean;
+  supportsTextToSpeech: boolean;
+  supportsAnnotations: boolean;
+  supportsHitl: boolean;
+  inputFields: DifyInputField[];
+  fileUpload: DifyFileCapabilities;
+  openingStatement?: string;
+  openingSuggestedQuestions: string[];
+};
 
 export type Assistant = {
   id: string;
@@ -9,6 +53,10 @@ export type Assistant = {
   apiKey: string;
   apiKeyMasked?: string;
   userId: string;
+  mode: DifyAppMode;
+  description?: string;
+  iconUrl?: string;
+  capabilities?: DifyCapabilities;
   createdAt: string;
   updatedAt: string;
 };
@@ -18,8 +66,62 @@ export type Conversation = {
   assistantId: string;
   title: string;
   difyConversationId?: string;
+  inputs?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+};
+
+export type MessageAttachment = {
+  id: string;
+  name: string;
+  url: string;
+  mimeType?: string;
+  size?: number;
+  transferMethod?: 'local_file' | 'remote_url';
+  uploadFileId?: string;
+  type?: string;
+};
+
+export type MessageTrace = {
+  id: string;
+  kind: 'agent-thought' | 'workflow' | 'node' | 'iteration' | 'loop' | 'tool';
+  title: string;
+  status: 'running' | 'success' | 'failed' | 'paused';
+  content?: string;
+  metadata?: Record<string, unknown>;
+  startedAt?: number;
+  finishedAt?: number;
+};
+
+export type MessageCitation = {
+  position?: number;
+  datasetName?: string;
+  documentName?: string;
+  segmentContent: string;
+  score?: number;
+};
+
+export type HitlInput = {
+  outputVariableName: string;
+  type?: string;
+  required?: boolean;
+};
+
+export type HitlAction = {
+  id: string;
+  title: string;
+  buttonStyle?: string;
+};
+
+export type HitlRequest = {
+  formToken: string;
+  taskId?: string;
+  formContent: string;
+  inputs: HitlInput[];
+  defaultValues: Record<string, string>;
+  actions: HitlAction[];
+  expirationTime: number;
+  submitted?: boolean;
 };
 
 export type Message = {
@@ -29,33 +131,33 @@ export type Message = {
   content: string;
   attachments?: MessageAttachment[];
   difyMessageId?: string;
+  taskId?: string;
   suggestedQuestions?: string[];
   feedbackRating?: MessageFeedbackRating;
   feedbackContent?: string;
+  traces?: MessageTrace[];
+  citations?: MessageCitation[];
+  hitl?: HitlRequest;
+  annotationId?: string;
   createdAt: string;
-  status?: 'ok' | 'error';
+  status?: MessageStatus;
 };
 
-export type MessageAttachment = {
+export type Annotation = {
   id: string;
-  name: string;
-  url: string;
-  mimeType?: string;
-  size?: number;
+  assistantId: string;
+  question: string;
+  answer: string;
+  createdAt?: string;
 };
 
-export type AppSettings = {
-  translationWebUrl: string;
-};
-
+export type AppSettings = { translationWebUrl: string };
 export type AppData = {
+  schemaVersion: 2;
   assistants: Assistant[];
   conversations: Conversation[];
   messages: Message[];
+  annotations: Annotation[];
   settings: AppSettings;
 };
-
-export type AdminConfig = {
-  assistants: Assistant[];
-  translationWebUrl: string;
-};
+export type AdminConfig = { assistants: Assistant[]; translationWebUrl: string };

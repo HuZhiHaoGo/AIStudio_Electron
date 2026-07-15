@@ -9,11 +9,12 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"node scripts/wait-for-vite.cjs\"",
     "dev:vite": "vite --host 127.0.0.1",
     "compile:electron": "tsc -p electron/tsconfig.json",
-    "dev:electron": "tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 ELECTRON_RUN_AS_NODE= electron .",
-    "debug:electron": "tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 ELECTRON_RUN_AS_NODE= electron --inspect=9229 .",
+    "dev:electron": "tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 node scripts/run-electron.cjs",
+    "debug:electron": "tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 node scripts/run-electron.cjs --inspect=9229",
     "build": "tsc && vite build && tsc -p electron/tsconfig.json",
+    "test": "vitest run",
     "preview": "vite preview",
-    "start": "electron .",
+    "start": "node scripts/run-electron.cjs",
     "prisma:generate": "prisma generate",
     "prisma:pull": "prisma db pull",
     "prisma:migrate": "prisma migrate dev",
@@ -24,12 +25,18 @@
     "@prisma/adapter-mssql": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "dotenv": "^16.4.7",
+    "katex": "^0.17.0",
     "lucide-react": "^0.468.0",
+    "mermaid": "^11.16.0",
     "prisma": "^7.8.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -41,7 +48,8 @@
     "electron": "33.4.11",
     "electron-builder": "^26.15.2",
     "typescript": "^5.7.0",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^4.1.10"
   },
   "build": {
     "appId": "com.local.aistudio",

@@ -12,6 +12,10 @@ export function windowIconPath() {
 }
 
 export function adminConfigPath() {
-  const baseDir = app.isPackaged ? process.resourcesPath : process.cwd();
+  const baseDir = app.isPackaged ? app.getPath('userData') : process.cwd();
   return path.join(baseDir, 'config', 'app-config.json');
+}
+
+export function bundledAdminConfigPath() {
+  return path.join(process.resourcesPath, 'config', 'app-config.json');
 }

@@ -2,12 +2,105 @@
   "assistants": [
     {
       "id": "app-3w1hm5PIuIOsduXVHacmrL8F",
-      "name": "AI助手",
+      "name": "外部知识库 + 聊天机器人",
+      "apiBaseUrl": "http://localhost/v1",
+      "apiKey": "app-q4IvtvreATcY0IyRpyU2F2Er",
+      "userId": "desktop-demo-user",
+      "mode": "advanced-chat",
+      "description": "",
+      "iconUrl": "",
+      "capabilities": {
+        "loaded": true,
+        "supportsConversation": true,
+        "supportsWorkflow": false,
+        "supportsCompletion": false,
+        "supportsFileUpload": false,
+        "supportsFeedback": true,
+        "supportsSuggestedQuestions": false,
+        "supportsSpeechToText": false,
+        "supportsTextToSpeech": false,
+        "supportsAnnotations": true,
+        "supportsHitl": false,
+        "inputFields": [],
+        "fileUpload": {
+          "enabled": false,
+          "allowedFileTypes": [
+            "image"
+          ],
+          "allowedFileExtensions": [
+            ".JPG",
+            ".JPEG",
+            ".PNG",
+            ".GIF",
+            ".WEBP",
+            ".SVG"
+          ],
+          "allowedUploadMethods": [
+            "local_file",
+            "remote_url"
+          ],
+          "numberLimits": 3,
+          "fileSizeLimitMb": 15,
+          "imageFileSizeLimitMb": 10,
+          "audioFileSizeLimitMb": 50,
+          "videoFileSizeLimitMb": 100
+        },
+        "openingStatement": "",
+        "openingSuggestedQuestions": []
+      },
+      "createdAt": "2026-06-22T00:00:00.000Z",
+      "updatedAt": "2026-07-15T09:42:05.884Z"
+    },
+    {
+      "id": "8e34c231-5a77-49b8-a60f-eeb1ef5e5c44",
+      "name": "多分支测试",
       "apiBaseUrl": "http://localhost/v1",
       "apiKey": "app-3w1hm5PIuIOsduXVHacmrL8F",
       "userId": "desktop-demo-user",
-      "createdAt": "2026-06-22T00:00:00.000Z",
-      "updatedAt": "2026-06-22T00:00:00.000Z"
+      "mode": "advanced-chat",
+      "description": "",
+      "iconUrl": "",
+      "capabilities": {
+        "loaded": true,
+        "supportsConversation": true,
+        "supportsWorkflow": false,
+        "supportsCompletion": false,
+        "supportsFileUpload": true,
+        "supportsFeedback": true,
+        "supportsSuggestedQuestions": true,
+        "supportsSpeechToText": false,
+        "supportsTextToSpeech": false,
+        "supportsAnnotations": true,
+        "supportsHitl": false,
+        "inputFields": [],
+        "fileUpload": {
+          "enabled": true,
+          "allowedFileTypes": [
+            "image"
+          ],
+          "allowedFileExtensions": [
+            ".JPG",
+            ".JPEG",
+            ".PNG",
+            ".GIF",
+            ".WEBP",
+            ".SVG"
+          ],
+          "allowedUploadMethods": [
+            "remote_url",
+            "local_file"
+          ],
+          "numberLimits": 3,
+          "fileSizeLimitMb": 15,
+          "imageFileSizeLimitMb": 10,
+          "audioFileSizeLimitMb": 50,
+          "videoFileSizeLimitMb": 100
+        },
+        "openingStatement": "",
+        "openingSuggestedQuestions": []
+      },
+      "createdAt": "2026-07-15T09:16:21.340Z",
+      "updatedAt": "2026-07-15T09:42:05.884Z"
     }
   ],
   "translationWebUrl": "https://www.wenxiaobai.com/"
