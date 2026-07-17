@@ -7,6 +7,8 @@ import type { DifyRunResult, DifySseEvent } from '../../../shared/types/dify';
 import { DifyEventAccumulator } from './eventAccumulator';
 import { defaultCapabilities, normalizeMode, parseCapabilities } from './capabilities';
 import { DifySseParser } from './sseParser';
+import { enrichRagflowCitations } from '../ragflow/client';
+import { validateAndRenumberCitations } from '../ragflow/citationValidator';
 
 type StreamContext = { streamId?: string; sender: WebContents; signal?: AbortSignal };
 type RunInput = {
@@ -113,7 +115,14 @@ export async function runDifyApp(assistant: Assistant, input: RunInput, stream: 
   if (accumulator.hitl?.formToken) accumulator.hitl = await enrichHitl(assistant, accumulator.hitl);
   const questions = accumulator.messageId && assistant.capabilities?.supportsSuggestedQuestions
     ? await fetchSuggestedQuestions(assistant, accumulator.messageId).catch(() => []) : [];
-  return accumulator.result(questions);
+  const result = accumulator.result(questions);
+  result.citations = await enrichRagflowCitations(result.citations);
+  if (result.citations.length && /\[\d+]/.test(result.answer)) {
+    const normalized = validateAndRenumberCitations(result.answer, result.citations, new Set(result.citations.map((item) => item.chunkId)));
+    result.answer = normalized.answer;
+    result.citations = normalized.citations;
+  }
+  return result;
 }
 
 async function enrichHitl(assistant: Assistant, hitl: HitlRequest): Promise<HitlRequest> {
@@ -182,7 +191,14 @@ export async function resumeDifyWorkflow(assistant: Assistant, taskId: string): 
   }
   consume(parser.finish(decoder.decode()));
   if (accumulator.hitl?.formToken) accumulator.hitl = await enrichHitl(assistant, accumulator.hitl);
-  return accumulator.result();
+  const result = accumulator.result();
+  result.citations = await enrichRagflowCitations(result.citations);
+  if (result.citations.length && /\[\d+]/.test(result.answer)) {
+    const normalized = validateAndRenumberCitations(result.answer, result.citations, new Set(result.citations.map((item) => item.chunkId)));
+    result.answer = normalized.answer;
+    result.citations = normalized.citations;
+  }
+  return result;
 }
 
 export async function renameDifyConversation(assistant: Assistant, conversationId: string, title: string) {

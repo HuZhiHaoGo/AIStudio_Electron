@@ -14,12 +14,16 @@ import {
 } from 'lucide-react';
 import { MarkdownMessage } from './components/markdown/MarkdownMessage';
 import type { AppData, DifyAppMode, Message, MessageAttachment, MessageFeedbackRating } from '../shared/types/app';
+import type { Citation } from '../shared/types/citation';
 import { MessageAttachments } from './components/chat/MessageAttachments';
 import { MessageComposer } from './components/chat/MessageComposer';
+import { SelectionCopyPopup } from './components/chat/SelectionCopyPopup';
 import { MessageFeedback } from './components/chat/MessageFeedback';
 import { CapabilityInputs } from './components/chat/CapabilityInputs';
 import { AssistantPicker } from './components/chat/AssistantPicker';
-import { HitlForm, MessageActions, MessageCitations, MessageTraces } from './components/chat/MessageDetails';
+import { HitlForm, MessageActions, MessageTraces, UserMessageActions } from './components/chat/MessageDetails';
+import { CitationList } from './components/citations/CitationList';
+import { SourceViewer } from './components/citations/SourceViewer';
 import { SuggestedQuestions } from './components/chat/SuggestedQuestions';
 import { Sidebar, type ActiveView } from './components/layout/Sidebar';
 import { StatusBanner } from './components/layout/StatusBanner';
@@ -54,7 +58,7 @@ type PendingDialog = {
 
 // React 启动时的空数据，真正数据会从 Electron Main 读取。
 const emptyData: AppData = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   assistants: [],
   conversations: [],
   messages: [],
@@ -148,6 +152,7 @@ export function App() {
   const [isDialogBusy, setIsDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState('');
   const [settingsUnlocked, setSettingsUnlocked] = useState(false);
+  const [sourceCitation, setSourceCitation] = useState<Citation | null>(null);
   const [assistantSyncStatus, setAssistantSyncStatus] = useState('');
   const { notice, error, setNotice, setError, clearStatus } = useStatusMessage();
   const { activeStreamIdRef, streamingContent, setStreamingContent, loadingDots } = useMessageStreaming(isSending);
@@ -629,6 +634,16 @@ export function App() {
     }
   }
 
+  function editUserMessage(message: Message) {
+    setInput(message.content);
+    setNotice('消息内容已放回输入框，修改后可重新发送');
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(message.content.length, message.content.length);
+      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
   return (
     <main className="app-shell">
       <Sidebar activeView={activeView} onChangeView={changeView} />
@@ -887,13 +902,15 @@ export function App() {
                   </div>
                   <div className={`bubble ${message.status === 'error' ? 'error' : ''}`}>
                     <MessageTraces traces={message.traces} />
-                    <MarkdownMessage content={message.content} onDownloadFile={(url, filename) => void downloadFile(url, filename)} />
+                    <div className="message-copy-scope">
+                      <MarkdownMessage content={message.content} onDownloadFile={(url, filename) => void downloadFile(url, filename)} />
+                    </div>
                     <MessageAttachments
                       attachments={message.attachments}
                       formatFileSize={formatFileSize}
                       onDownloadFile={(url, filename) => void downloadFile(url, filename)}
                     />
-                    <MessageCitations citations={message.citations} />
+                    <CitationList citations={message.citations} onViewSource={setSourceCitation} />
                     {message.hitl ? <HitlForm hitl={message.hitl} disabled={isSending} onSubmit={(inputs, action) => submitHitl(message, inputs, action)} /> : null}
                     {message.role === 'assistant' ? (
                       <SuggestedQuestions
@@ -903,6 +920,7 @@ export function App() {
                       />
                     ) : null}
                     <MessageFeedback message={message} onFeedback={(target, rating) => void sendFeedback(target, rating)} />
+                    {message.role === 'user' && message.status !== 'error' ? <UserMessageActions message={message} disabled={isSending} onEdit={editUserMessage} /> : null}
                     {message.role === 'assistant' && message.status !== 'error' ? <MessageActions message={message} onRegenerate={() => {
                       const index = messages.findIndex((item) => item.id === message.id);
                       const question = [...messages.slice(0, index)].reverse().find((item) => item.role === 'user')?.content;
@@ -930,6 +948,8 @@ export function App() {
 
               <div ref={messagesEndRef} />
             </div>
+
+            <SelectionCopyPopup />
 
             {showScrollToBottom && (
               <button
@@ -989,6 +1009,8 @@ export function App() {
           onConfirm={() => void confirmDialog()}
         />
       ) : null}
+
+      {sourceCitation ? <SourceViewer citation={sourceCitation} onClose={() => setSourceCitation(null)} /> : null}
     </main>
   );
 }

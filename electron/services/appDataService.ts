@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { AppData } from '../../shared/types/app';
 import { dataFilePath } from '../window/windowPaths';
 import { readAdminConfig } from './adminConfigService';
+import { migrateStoredMessages } from './messageMigration';
 
 function maskKey(apiKey: string) {
   if (!apiKey) {
@@ -28,7 +29,7 @@ export function publicData(data: AppData) {
 
 export function defaultData(): AppData {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     assistants: [],
     conversations: [],
     messages: [],
@@ -48,18 +49,10 @@ export async function readData(): Promise<AppData> {
     const data = JSON.parse(content) as AppData;
 
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       assistants: adminConfig.assistants,
       conversations: data.conversations || [],
-      messages: (data.messages || []).map((message) => ({
-        ...message,
-        attachments: message.attachments || [],
-        suggestedQuestions: message.suggestedQuestions || [],
-        feedbackRating: message.feedbackRating ?? null,
-        feedbackContent: message.feedbackContent || '',
-        traces: message.traces || [],
-        citations: message.citations || [],
-      })),
+      messages: migrateStoredMessages(data.messages || []),
       annotations: data.annotations || [],
       settings: {
         translationWebUrl: adminConfig.translationWebUrl,
@@ -87,7 +80,7 @@ export async function readData(): Promise<AppData> {
 export async function writeData(data: AppData) {
   const filePath = dataFilePath();
   const storedData: AppData = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     assistants: [],
     conversations: data.conversations,
     messages: data.messages,

@@ -1,8 +1,9 @@
 import type {
   AnnotationRequest, DeleteAnnotationRequest, DownloadFileRequest, HitlSubmitRequest,
   MessageFeedbackRequest, RenameConversationRequest, SaveAssistantRequest, SaveSettingsRequest,
-  SendMessageRequest, UploadFileRequest,
+  SendMessageRequest, UploadFileRequest, MessageStreamChunk,
   VerifySettingsPasswordRequest,
+  RagflowDocumentRequest, RagflowImageRequest,
 } from '../../shared/types/ipc';
 
 export const difyApiClient = {
@@ -10,6 +11,8 @@ export const difyApiClient = {
   saveAssistant: (request: SaveAssistantRequest) => window.difyApi.saveAssistant(request),
   saveSettings: (request: SaveSettingsRequest) => window.difyApi.saveSettings(request),
   verifySettingsPassword: (request: VerifySettingsPasswordRequest) => window.difyApi.verifySettingsPassword(request),
+  loadRagflowImage: (request: RagflowImageRequest) => window.difyApi.loadRagflowImage(request),
+  loadRagflowDocument: (request: RagflowDocumentRequest) => window.difyApi.loadRagflowDocument(request),
   refreshAssistant: (assistantId: string) => window.difyApi.refreshAssistant({ assistantId }),
   refreshAllAssistants: () => window.difyApi.refreshAllAssistants(),
   createConversation: (assistantId: string) => window.difyApi.createConversation(assistantId),
@@ -23,5 +26,5 @@ export const difyApiClient = {
   deleteAnnotation: (request: DeleteAnnotationRequest) => window.difyApi.deleteAnnotation(request),
   submitHitl: (request: HitlSubmitRequest) => window.difyApi.submitHitl(request),
   downloadFile: (request: DownloadFileRequest) => window.difyApi.downloadFile(request),
-  onMessageStreamChunk: window.difyApi.onMessageStreamChunk,
+  onMessageStreamChunk: (callback: (chunk: MessageStreamChunk) => void) => window.difyApi.onMessageStreamChunk(callback),
 };

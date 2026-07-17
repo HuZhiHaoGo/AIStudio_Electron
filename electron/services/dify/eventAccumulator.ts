@@ -1,9 +1,22 @@
 import type { HitlRequest, MessageAttachment, MessageCitation, MessageTrace } from '../../../shared/types/app';
 import type { DifyFile, DifyRunResult, DifySseEvent } from '../../../shared/types/dify';
 import { createId } from '../../utils/id';
+import { normalizeRagflowCitation } from '../ragflow/adapter';
 
 const object = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+
+export function parseStructuredDifyAnswer(value: string): { answer: string; citations: Array<Record<string, unknown>> } | null {
+  const trimmed = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  if (!trimmed.startsWith('{')) return null;
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    if (typeof parsed.answer !== 'string' || !Array.isArray(parsed.citations)) return null;
+    return { answer: parsed.answer, citations: parsed.citations.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item)) };
+  } catch {
+    return null;
+  }
+}
 
 export class DifyEventAccumulator {
   answer = '';
@@ -44,7 +57,21 @@ export class DifyEventAccumulator {
       this.addTrace(event, 'workflow', '工作流完成');
       const outputs = object(event.data?.outputs);
       const outputAnswer = outputs.answer;
-      if (typeof outputAnswer === 'string') this.finalAnswer = this.normalizeLinks(outputAnswer);
+      if (typeof outputAnswer === 'string') {
+        const structured = parseStructuredDifyAnswer(outputAnswer);
+        if (structured) {
+          this.finalAnswer = this.normalizeLinks(structured.answer);
+          this.collectCitations(structured.citations.map((citation) => ({ ...citation, retrieval_id: citation.retrieval_id || outputs.retrieval_id })));
+        } else {
+          this.finalAnswer = this.normalizeLinks(outputAnswer);
+          if (Array.isArray(outputs.citations)) {
+            this.collectCitations(outputs.citations.map((citation) => ({
+              ...object(citation),
+              retrieval_id: object(citation).retrieval_id || outputs.retrieval_id,
+            })));
+          }
+        }
+      }
       else if (Object.keys(outputs).length) this.finalAnswer = `\n\n\`\`\`json\n${JSON.stringify(outputs, null, 2)}\n\`\`\``;
     }
     if (event.event === 'workflow_paused') this.addTrace(event, 'workflow', '工作流等待人工处理');
@@ -61,6 +88,11 @@ export class DifyEventAccumulator {
   }
 
   result(suggestedQuestions: string[] = []): DifyRunResult {
+    const structured = parseStructuredDifyAnswer(this.finalAnswer || this.answer);
+    if (structured) {
+      this.finalAnswer = this.normalizeLinks(structured.answer);
+      this.collectCitations(structured.citations);
+    }
     return {
       answer: this.finalAnswer || this.answer,
       difyConversationId: this.conversationId,
@@ -119,15 +151,7 @@ export class DifyEventAccumulator {
   }
 
   private collectCitations(resources: Array<Record<string, unknown>> | undefined) {
-    for (const item of resources || []) {
-      this.citations.push({
-        position: typeof item.position === 'number' ? item.position : undefined,
-        datasetName: typeof item.dataset_name === 'string' ? item.dataset_name : undefined,
-        documentName: typeof item.document_name === 'string' ? item.document_name : undefined,
-        segmentContent: String(item.content || item.segment_content || ''),
-        score: typeof item.score === 'number' ? item.score : undefined,
-      });
-    }
+    for (const item of resources || []) this.citations.push(normalizeRagflowCitation(item, this.citations.length + 1));
   }
 
   private collectFiles(files?: DifyFile[]) {

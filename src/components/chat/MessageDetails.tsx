@@ -1,4 +1,4 @@
-import { Check, Clock, Copy, RefreshCw, Save } from 'lucide-react';
+import { Check, Clock, Copy, Pencil, RefreshCw, Save } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { HitlRequest, Message, MessageCitation, MessageTrace } from '../../../shared/types/app';
 
@@ -25,8 +25,8 @@ export function MessageCitations({ citations }: { citations?: MessageCitation[] 
       <summary>知识库引用（{citations.length}）</summary>
       {citations.map((citation, index) => <blockquote key={`${citation.documentName}-${index}`}>
         <strong>{citation.documentName || citation.datasetName || `引用 ${index + 1}`}</strong>
-        <p>{citation.segmentContent}</p>
-        {citation.score !== undefined ? <small>相关度 {(citation.score * 100).toFixed(1)}%</small> : null}
+        <p>{citation.content}</p>
+        {citation.score !== undefined ? <small>检索分数 {(citation.score * 100).toFixed(1)}%</small> : null}
       </blockquote>)}
     </details>
   );
@@ -60,4 +60,21 @@ export function MessageActions({ message, onRegenerate, onAnnotate }: { message:
     { title: message.annotationId ? '已标注' : '创建标注', icon: message.annotationId ? <Check size={14} /> : <Save size={14} />, run: () => onAnnotate(message.content) },
   ], [copied, message.annotationId, message.content, onAnnotate, onRegenerate]);
   return <div className="message-actions">{actions.map((action) => <button key={action.title} type="button" onClick={() => void action.run()}>{action.icon}{action.title}</button>)}</div>;
+}
+
+export function UserMessageActions({ message, disabled, onEdit }: { message: Message; disabled?: boolean; onEdit: (message: Message) => void }) {
+  const [copied, setCopied] = useState(false);
+  async function copyContent() {
+    await navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1200);
+  }
+  return <div className="message-actions user-message-actions" aria-label="用户消息操作">
+    <button type="button" disabled={disabled} title={copied ? '已复制' : '复制内容'} aria-label={copied ? '已复制' : '复制内容'} onClick={() => void copyContent()}>
+      {copied ? <Check size={15} /> : <Copy size={15} />}
+    </button>
+    <button type="button" disabled={disabled} title="再次编辑" aria-label="再次编辑" onClick={() => onEdit(message)}>
+      <Pencil size={15} />
+    </button>
+  </div>;
 }

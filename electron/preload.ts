@@ -11,6 +11,8 @@ import type {
   SendMessageRequest,
   UploadFileRequest,
   VerifySettingsPasswordRequest,
+  RagflowDocumentRequest,
+  RagflowImageRequest,
 } from '../shared/types/ipc';
 
 // preload 运行在 Electron 的隔离环境里。
@@ -28,6 +30,8 @@ contextBridge.exposeInMainWorld('difyApi', {
   // 保存全局设置。
   saveSettings: (request: SaveSettingsRequest) => ipcRenderer.invoke('settings:save', request),
   verifySettingsPassword: (request: VerifySettingsPasswordRequest) => ipcRenderer.invoke('settings:verify-password', request),
+  loadRagflowImage: (request: RagflowImageRequest) => ipcRenderer.invoke('ragflow:image', request),
+  loadRagflowDocument: (request: RagflowDocumentRequest) => ipcRenderer.invoke('ragflow:document', request),
   refreshAssistant: (request: { assistantId: string }) => ipcRenderer.invoke('assistant:refresh', request),
   refreshAllAssistants: () => ipcRenderer.invoke('assistant:refresh-all'),
 

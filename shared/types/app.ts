@@ -93,13 +93,7 @@ export type MessageTrace = {
   finishedAt?: number;
 };
 
-export type MessageCitation = {
-  position?: number;
-  datasetName?: string;
-  documentName?: string;
-  segmentContent: string;
-  score?: number;
-};
+export type MessageCitation = Citation;
 
 export type HitlInput = {
   outputVariableName: string;
@@ -153,7 +147,7 @@ export type Annotation = {
 
 export type AppSettings = { translationWebUrl: string };
 export type AppData = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   assistants: Assistant[];
   conversations: Conversation[];
   messages: Message[];
@@ -161,3 +155,4 @@ export type AppData = {
   settings: AppSettings;
 };
 export type AdminConfig = { assistants: Assistant[]; translationWebUrl: string };
+import type { Citation } from './citation';

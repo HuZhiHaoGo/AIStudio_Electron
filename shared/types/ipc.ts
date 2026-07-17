@@ -2,6 +2,7 @@ import type {
   Annotation, AppData, DifyAppMode, MessageAttachment, MessageFeedbackRating,
 } from './app';
 import type { DifySseEvent } from './dify';
+import type { RagflowAsset } from './citation';
 
 export type SaveAssistantRequest = { id?: string; name: string; apiBaseUrl: string; apiKey: string; userId: string; mode: DifyAppMode };
 export type SaveSettingsRequest = { translationWebUrl: string };
@@ -22,12 +23,16 @@ export type DownloadFileRequest = { url: string; filename?: string };
 export type DownloadFileResult = { canceled: boolean; filePath?: string };
 export type StopMessageResult = { stopped: boolean };
 export type VerifySettingsPasswordRequest = { password: string };
+export type RagflowImageRequest = { imageId: string; datasetId?: string };
+export type RagflowDocumentRequest = { datasetId: string; documentId: string };
 
 export type DifyApiBridge = {
   getData(): Promise<AppData>;
   saveAssistant(request: SaveAssistantRequest): Promise<AppData>;
   saveSettings(request: SaveSettingsRequest): Promise<AppData>;
   verifySettingsPassword(request: VerifySettingsPasswordRequest): Promise<boolean>;
+  loadRagflowImage(request: RagflowImageRequest): Promise<RagflowAsset>;
+  loadRagflowDocument(request: RagflowDocumentRequest): Promise<RagflowAsset>;
   refreshAssistant(request: RefreshAssistantRequest): Promise<AppData>;
   refreshAllAssistants(): Promise<RefreshAllAssistantsResult>;
   createConversation(assistantId: string): Promise<AppData>;

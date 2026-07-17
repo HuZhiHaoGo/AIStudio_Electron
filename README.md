@@ -482,11 +482,24 @@ git clean -fd
 
 - Dify 能力参数解析。
 - SSE 分块、CRLF、多行数据和结束数据解析。
+- Dify Chatflow 与 Workflow 的结构化引用输出解析。
+- RAGFlow 不同版本字段的统一适配与引用编号校验。
+- 富引用卡片的正文、页码和异常状态渲染。
 
 测试文件位于：
 
 - `electron/services/dify/capabilities.test.ts`
 - `electron/services/dify/sseParser.test.ts`
+- `electron/services/dify/eventAccumulator.test.ts`
+- `electron/services/ragflow/adapter.test.ts`
+- `electron/services/ragflow/citationValidator.test.ts`
+- `electron/services/ragflow/client.test.ts`
+- `electron/services/messageMigration.test.ts`
+- `src/components/citations/CitationList.test.tsx`
+- `src/components/citations/pdfCoordinates.test.ts`
+- `src/components/citations/citationsStyles.test.ts`
+- `src/components/chat/MessageDetails.test.tsx`
+- `src/components/chat/SelectionCopyPopup.test.tsx`
 
 新增 Dify 事件或参数类型时，建议同步增加测试。
 
@@ -505,3 +518,16 @@ Dify 请求：electron/services/dify/client.ts / uploadDifyFile()
 ```
 
 不需要先完全学会 React 或 Electron再开始。选择一个足够小的真实需求，一边修改、一边记录调用链，是熟悉这个项目最快的方式。
+
+## 14. Dify + RAGFlow 富引用
+
+项目支持在回答下展示 RAGFlow 富引用卡片，包括文档名、页码、原文片段、图片、表格、检索分数，以及右侧原始文档查看。PDF 支持翻页、缩放和 bbox 高亮，Word、Excel、图片和文本文件会按真实格式进入对应查看器，也可下载原始文件。
+
+安全边界如下：
+
+- Dify Key 只保存在 Electron 主进程配置中。
+- RAGFlow Key 只保存在 Python Proxy 环境变量中。
+- React 通过 preload/IPC 获取图片和原始文档字节，不直接访问带密钥的地址。
+- 富引用快照随消息保存，重新进入历史会话后仍可展示。
+
+完整的代理部署、环境变量、Dify Prompt、结构化输出和字段映射参见 [Dify + RAGFlow 富引用配置](docs/dify-ragflow-rich-citations.md)。

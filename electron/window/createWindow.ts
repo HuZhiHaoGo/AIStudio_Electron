@@ -4,6 +4,7 @@ import { BrowserWindow, shell } from 'electron';
 import path from 'node:path';
 // 导入窗口图标路径函数：路径细节集中放在 windowPaths.ts 中维护。
 import { windowIconPath } from './windowPaths';
+import { installEditableContextMenu } from './editableContextMenu';
 
 // 定义 createWindow 接收的参数类型；type 是 TypeScript 语法，只用于类型检查。
 type CreateWindowOptions = {
@@ -43,6 +44,9 @@ export function createWindow({ isDev, devServerUrl }: CreateWindowOptions) {
       webviewTag: true,
     },
   });
+
+  // 输入框右键菜单：提供桌面用户熟悉的剪切、复制、粘贴和全选操作。
+  installEditableContextMenu(win);
 
   // 监听窗口网页内容的键盘事件；before-input-event 发生在页面处理按键之前。
   win.webContents.on('before-input-event', (event, input) => {
