@@ -21,11 +21,13 @@ export type MessageStreamChunk = { streamId: string; content: string; event?: Di
 export type DownloadFileRequest = { url: string; filename?: string };
 export type DownloadFileResult = { canceled: boolean; filePath?: string };
 export type StopMessageResult = { stopped: boolean };
+export type VerifySettingsPasswordRequest = { password: string };
 
 export type DifyApiBridge = {
   getData(): Promise<AppData>;
   saveAssistant(request: SaveAssistantRequest): Promise<AppData>;
   saveSettings(request: SaveSettingsRequest): Promise<AppData>;
+  verifySettingsPassword(request: VerifySettingsPasswordRequest): Promise<boolean>;
   refreshAssistant(request: RefreshAssistantRequest): Promise<AppData>;
   refreshAllAssistants(): Promise<RefreshAllAssistantsResult>;
   createConversation(assistantId: string): Promise<AppData>;

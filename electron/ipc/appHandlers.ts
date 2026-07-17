@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import type { SaveAssistantRequest, SaveSettingsRequest } from '../../shared/types/ipc';
+import type { SaveAssistantRequest, SaveSettingsRequest, VerifySettingsPasswordRequest } from '../../shared/types/ipc';
 import { publicData, readData, writeData } from '../services/appDataService';
 import { readAdminConfig, writeAdminConfig } from '../services/adminConfigService';
 import { listDifyAnnotations, loadAssistantProfile } from '../services/dify/client';
@@ -8,6 +8,10 @@ import { now } from '../utils/time';
 
 export function registerAppHandlers() {
   ipcMain.handle('app:get-data', async () => publicData(await readData()));
+
+  ipcMain.handle('settings:verify-password', (_event, request: VerifySettingsPasswordRequest) => (
+    request.password === '044909'
+  ));
 
   ipcMain.handle('assistant:save', async (_event, request: SaveAssistantRequest) => {
     if (!request.apiBaseUrl.trim()) throw new Error('Dify API 地址不能为空。');

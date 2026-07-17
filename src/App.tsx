@@ -43,7 +43,7 @@ type AssistantForm = {
 type SettingsSection = 'assistant' | 'translation';
 
 type PendingDialog = {
-  kind: 'rename' | 'delete-conversation' | 'dislike' | 'annotation';
+  kind: 'rename' | 'delete-conversation' | 'dislike' | 'annotation' | 'settings-login';
   title: string;
   description?: string;
   confirmText: string;
@@ -146,6 +146,8 @@ export function App() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [pendingDialog, setPendingDialog] = useState<PendingDialog | null>(null);
   const [isDialogBusy, setIsDialogBusy] = useState(false);
+  const [dialogError, setDialogError] = useState('');
+  const [settingsUnlocked, setSettingsUnlocked] = useState(false);
   const [assistantSyncStatus, setAssistantSyncStatus] = useState('');
   const { notice, error, setNotice, setError, clearStatus } = useStatusMessage();
   const { activeStreamIdRef, streamingContent, setStreamingContent, loadingDots } = useMessageStreaming(isSending);
@@ -352,6 +354,22 @@ export function App() {
     }
   }
 
+  function changeView(view: ActiveView) {
+    if (view !== 'settings' || settingsUnlocked) {
+      setActiveView(view);
+      return;
+    }
+
+    setDialogError('');
+    setPendingDialog({
+      kind: 'settings-login',
+      title: '验证设置密码',
+      description: '设置中包含 Dify API Key 等敏感配置，请输入密码后继续。',
+      confirmText: '进入设置',
+      fields: [{ name: 'password', label: '登录密码', value: '', inputType: 'password', required: true }],
+    });
+  }
+
   async function autoRefreshAssistants() {
     setAssistantSyncStatus('');
     try {
@@ -509,10 +527,19 @@ export function App() {
     if (!pendingDialog) return;
     const values = Object.fromEntries(pendingDialog.fields.map((field) => [field.name, field.value.trim()]));
     setIsDialogBusy(true);
+    setDialogError('');
     setError('');
 
     try {
-      if (pendingDialog.kind === 'rename' && selectedConversation) {
+      if (pendingDialog.kind === 'settings-login') {
+        const verified = await difyApiClient.verifySettingsPassword({ password: values.password || '' });
+        if (!verified) {
+          setDialogError('密码错误，请重新输入。');
+          return;
+        }
+        setSettingsUnlocked(true);
+        setActiveView('settings');
+      } else if (pendingDialog.kind === 'rename' && selectedConversation) {
         setData(await difyApiClient.renameConversation({ conversationId: selectedConversation.id, title: values.title }));
         setNotice('会话名称已更新');
       } else if (pendingDialog.kind === 'delete-conversation' && pendingDialog.conversationId) {
@@ -604,7 +631,7 @@ export function App() {
 
   return (
     <main className="app-shell">
-      <Sidebar activeView={activeView} onChangeView={setActiveView} />
+      <Sidebar activeView={activeView} onChangeView={changeView} />
 
       {activeView === 'settings' && (
         <section className="settings-workspace" aria-label="设置界面">
@@ -953,11 +980,12 @@ export function App() {
           confirmText={pendingDialog.confirmText}
           fields={pendingDialog.fields}
           busy={isDialogBusy}
+          error={dialogError}
           onChange={(name, value) => setPendingDialog((current) => current ? {
             ...current,
             fields: current.fields.map((field) => field.name === name ? { ...field, value } : field),
           } : null)}
-          onCancel={() => setPendingDialog(null)}
+          onCancel={() => { setPendingDialog(null); setDialogError(''); }}
           onConfirm={() => void confirmDialog()}
         />
       ) : null}

@@ -10,6 +10,7 @@ import type {
   SaveSettingsRequest,
   SendMessageRequest,
   UploadFileRequest,
+  VerifySettingsPasswordRequest,
 } from '../shared/types/ipc';
 
 // preload 运行在 Electron 的隔离环境里。
@@ -26,6 +27,7 @@ contextBridge.exposeInMainWorld('difyApi', {
 
   // 保存全局设置。
   saveSettings: (request: SaveSettingsRequest) => ipcRenderer.invoke('settings:save', request),
+  verifySettingsPassword: (request: VerifySettingsPasswordRequest) => ipcRenderer.invoke('settings:verify-password', request),
   refreshAssistant: (request: { assistantId: string }) => ipcRenderer.invoke('assistant:refresh', request),
   refreshAllAssistants: () => ipcRenderer.invoke('assistant:refresh-all'),
 

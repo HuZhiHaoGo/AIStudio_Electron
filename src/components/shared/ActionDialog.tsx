@@ -4,6 +4,7 @@ export type ActionDialogField = {
   name: string;
   label: string;
   value: string;
+  inputType?: 'text' | 'password';
   multiline?: boolean;
   required?: boolean;
 };
@@ -14,6 +15,7 @@ type ActionDialogProps = {
   confirmText?: string;
   fields: ActionDialogField[];
   busy?: boolean;
+  error?: string;
   onChange: (name: string, value: string) => void;
   onCancel: () => void;
   onConfirm: () => void;
@@ -25,6 +27,7 @@ export function ActionDialog({
   confirmText = '确定',
   fields,
   busy = false,
+  error,
   onChange,
   onCancel,
   onConfirm,
@@ -77,6 +80,8 @@ export function ActionDialog({
                 <input
                   ref={index === 0 ? firstInputRef as React.RefObject<HTMLInputElement> : undefined}
                   value={field.value}
+                  type={field.inputType || 'text'}
+                  autoComplete={field.inputType === 'password' ? 'current-password' : undefined}
                   required={field.required}
                   disabled={busy}
                   onChange={(event) => onChange(field.name, event.target.value)}
@@ -85,6 +90,8 @@ export function ActionDialog({
             </label>
           ))}
         </div>
+
+        {error ? <p className="action-dialog-error" role="alert">{error}</p> : null}
 
         <footer>
           <button className="secondary-action" type="button" disabled={busy} onClick={onCancel}>取消</button>

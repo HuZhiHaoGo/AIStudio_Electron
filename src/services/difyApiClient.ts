@@ -2,12 +2,14 @@ import type {
   AnnotationRequest, DeleteAnnotationRequest, DownloadFileRequest, HitlSubmitRequest,
   MessageFeedbackRequest, RenameConversationRequest, SaveAssistantRequest, SaveSettingsRequest,
   SendMessageRequest, UploadFileRequest,
+  VerifySettingsPasswordRequest,
 } from '../../shared/types/ipc';
 
 export const difyApiClient = {
   getData: () => window.difyApi.getData(),
   saveAssistant: (request: SaveAssistantRequest) => window.difyApi.saveAssistant(request),
   saveSettings: (request: SaveSettingsRequest) => window.difyApi.saveSettings(request),
+  verifySettingsPassword: (request: VerifySettingsPasswordRequest) => window.difyApi.verifySettingsPassword(request),
   refreshAssistant: (assistantId: string) => window.difyApi.refreshAssistant({ assistantId }),
   refreshAllAssistants: () => window.difyApi.refreshAllAssistants(),
   createConversation: (assistantId: string) => window.difyApi.createConversation(assistantId),
