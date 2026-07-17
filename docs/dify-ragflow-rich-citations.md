@@ -40,12 +40,15 @@ RAGFLOW_IMAGE_PATH_TEMPLATE=/v1/document/image/{dataset_id}-{image_id}
 
 代理只允许由字母、数字、下划线和短横线组成的资源 ID，不接受任意 URL，因此图片和文档接口不能被用作开放式 SSRF 代理。
 
-构建与运行示例：
+完整的新手部署、日常启停、缓存管理和排错手册位于 `E:\AIProjects\Proxy\README.md`。推荐通过 Compose 构建和运行：
 
 ```powershell
-cd E:\AIProjects\Proxy
-docker build -t dify-ragflow-proxy:2.0 .
-docker run --rm -p 8008:8008 --env-file .env dify-ragflow-proxy:2.0
+Set-Location E:\AIProjects\Proxy
+Copy-Item .env.example .env
+notepad .env
+docker build -t ragflow-proxy:2.1.0 .
+docker compose up -d
+Invoke-RestMethod http://127.0.0.1:8008/health
 ```
 
 ## 3. Electron 配置
@@ -55,10 +58,12 @@ docker run --rm -p 8008:8008 --env-file .env dify-ragflow-proxy:2.0
 ```dotenv
 RAGFLOW_PROXY_URL=http://127.0.0.1:8008
 RAGFLOW_PROXY_TOKEN=与代理端PROXY_API_TOKEN相同
-RAGFLOW_PROXY_TIMEOUT=20000
+RAGFLOW_PROXY_TIMEOUT=120000
 ```
 
 这些变量只由 Electron 主进程读取，没有 `VITE_` 前缀，不会进入渲染进程。
+
+源码开发时使用项目根目录 `.env`。打包后的应用若需要覆盖默认地址，应在启动软件前设置同名 Windows 用户环境变量；修改后需要重启应用及其父进程。
 
 ## 4. Dify 外部知识库
 
@@ -219,5 +224,6 @@ pytest -q
 - 引用缓存当前为进程内 TTL 缓存，适合单实例代理。多实例部署应替换为 Redis。
 - 历史消息保存完整文本、页码、图片 ID 和 bbox，但不保存大尺寸图片 Base64。
 - 图片接口路径必须与实际 RAGFlow 版本匹配。
-- 原始文档查看器会校验响应 MIME、文件扩展名和文件头：PDF 使用兼容 Electron 的 PDF.js 构建；`.doc/.docx`、`.xls/.xlsx`、图片和文本进入各自的预览界面。不能直接预览的格式仍可下载原始文件。
+- 原始文档查看器优先请求 Proxy 的 `/api/v1/previews/{dataset_id}/{document_id}`：PDF 直返，`.doc/.docx`、`.xls/.xlsx`、`.ppt/.pptx` 由 LibreOffice 转成 PDF，并在校验 `%PDF-` 文件头后交给 PDF.js。转换失败时 Electron 会回退到原始文档和现有本地查看器。预览面板允许拖动调整宽度；PDF 支持单页翻页和纵向连续滚动，连续模式只渲染可视区域附近的页面；产品界面不提供原始文件下载入口。
+- Proxy 转换临时文件在每次任务结束后删除；转换后的 PDF 使用有 TTL 和容量上限的 Docker 命名卷缓存。详细部署参数见 `E:\AIProjects\Proxy\README.md`。
 - Dify 若完全丢弃 Proxy 写入的 metadata，需要使用 HTTP 节点显式返回 `retrieval_id`。

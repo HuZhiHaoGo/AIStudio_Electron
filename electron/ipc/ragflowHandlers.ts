@@ -4,6 +4,5 @@ import { loadRagflowDocument, loadRagflowImage } from '../services/ragflow/clien
 
 export function registerRagflowHandlers() {
   ipcMain.handle('ragflow:image', (_event, request: RagflowImageRequest) => loadRagflowImage(request.imageId, request.datasetId));
-  ipcMain.handle('ragflow:document', (_event, request: RagflowDocumentRequest) => loadRagflowDocument(request.datasetId, request.documentId));
+  ipcMain.handle('ragflow:document', (_event, request: RagflowDocumentRequest) => loadRagflowDocument(request.datasetId, request.documentId, request.filename));
 }
-

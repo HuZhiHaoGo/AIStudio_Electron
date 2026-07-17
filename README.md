@@ -521,7 +521,7 @@ Dify 请求：electron/services/dify/client.ts / uploadDifyFile()
 
 ## 14. Dify + RAGFlow 富引用
 
-项目支持在回答下展示 RAGFlow 富引用卡片，包括文档名、页码、原文片段、图片、表格、检索分数，以及右侧原始文档查看。PDF 支持翻页、缩放和 bbox 高亮，Word、Excel、图片和文本文件会按真实格式进入对应查看器，也可下载原始文件。
+项目支持在回答下展示 RAGFlow 富引用卡片，包括文档名、页码、原文片段、图片、表格、检索分数，以及右侧原始文档查看。Electron 会优先调用 Proxy 的 `/api/v1/previews/...` 接口：PDF 直接返回，Word、Excel、PowerPoint 由容器中的 LibreOffice 转为 PDF，从而尽量保留原始分页、图片、表格和版式；代理不支持时再回退到本地查看器。预览面板支持拖动调整宽度；PDF 可以在“单页翻页”和“纵向连续滚动”之间切换，并记住用户最后选择的模式。
 
 安全边界如下：
 
@@ -530,4 +530,4 @@ Dify 请求：electron/services/dify/client.ts / uploadDifyFile()
 - React 通过 preload/IPC 获取图片和原始文档字节，不直接访问带密钥的地址。
 - 富引用快照随消息保存，重新进入历史会话后仍可展示。
 
-完整的代理部署、环境变量、Dify Prompt、结构化输出和字段映射参见 [Dify + RAGFlow 富引用配置](docs/dify-ragflow-rich-citations.md)。
+完整的字段映射和 Dify 配置参见 [Dify + RAGFlow 富引用配置](docs/dify-ragflow-rich-citations.md)；Proxy 首次部署、日常启动、缓存、更新、回滚和故障排查参见 `E:\AIProjects\Proxy\README.md`。

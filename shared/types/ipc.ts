@@ -24,7 +24,7 @@ export type DownloadFileResult = { canceled: boolean; filePath?: string };
 export type StopMessageResult = { stopped: boolean };
 export type VerifySettingsPasswordRequest = { password: string };
 export type RagflowImageRequest = { imageId: string; datasetId?: string };
-export type RagflowDocumentRequest = { datasetId: string; documentId: string };
+export type RagflowDocumentRequest = { datasetId: string; documentId: string; filename?: string };
 
 export type DifyApiBridge = {
   getData(): Promise<AppData>;

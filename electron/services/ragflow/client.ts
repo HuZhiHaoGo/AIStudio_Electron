@@ -39,6 +39,23 @@ async function proxyFetch(path: string, init?: RequestInit) {
   return response;
 }
 
+function responseFilename(response: Response) {
+  const disposition = response.headers.get('content-disposition') || '';
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  if (encoded) {
+    try { return decodeURIComponent(encoded); } catch { return encoded; }
+  }
+  return /filename="?([^";]+)"?/i.exec(disposition)?.[1];
+}
+
+async function responseAsset(response: Response): Promise<RagflowAsset> {
+  return {
+    bytes: new Uint8Array(await response.arrayBuffer()),
+    mimeType: response.headers.get('content-type') || 'application/pdf',
+    filename: responseFilename(response),
+  };
+}
+
 export async function enrichRagflowCitations(citations: Citation[]): Promise<Citation[]> {
   const groups = new Map<string, Citation[]>();
   for (const citation of citations) {
@@ -78,11 +95,24 @@ export async function loadRagflowImage(imageId: string, datasetId?: string): Pro
   return { bytes: new Uint8Array(await response.arrayBuffer()), mimeType: response.headers.get('content-type') || 'image/jpeg' };
 }
 
-export async function loadRagflowDocument(datasetId: string, documentId: string): Promise<RagflowAsset> {
-  const response = await proxyFetch(`/api/v1/documents/${encodeURIComponent(validateId(datasetId, 'datasetId'))}/${encodeURIComponent(validateId(documentId, 'documentId'))}`, {
-    headers: { Accept: 'application/pdf,application/octet-stream' },
-  });
-  const disposition = response.headers.get('content-disposition') || '';
-  const filename = /filename="?([^";]+)"?/i.exec(disposition)?.[1];
-  return { bytes: new Uint8Array(await response.arrayBuffer()), mimeType: response.headers.get('content-type') || 'application/pdf', filename };
+export async function loadRagflowDocument(datasetId: string, documentId: string, filename?: string): Promise<RagflowAsset> {
+  const safeDatasetId = encodeURIComponent(validateId(datasetId, 'datasetId'));
+  const safeDocumentId = encodeURIComponent(validateId(documentId, 'documentId'));
+  const query = filename ? `?filename=${encodeURIComponent(filename)}` : '';
+  try {
+    const preview = await proxyFetch(`/api/v1/previews/${safeDatasetId}/${safeDocumentId}${query}`, {
+      headers: { Accept: 'application/pdf' },
+    });
+    return responseAsset(preview);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    // Compatible with an older proxy and keeps the existing local Office
+    // renderer available when a single document cannot be converted.
+    if (!/HTTP (404|413|415|422|503|504)\b/.test(message)) throw error;
+    console.warn(`RAGFlow PDF preview unavailable; using original document: ${message}`);
+    const original = await proxyFetch(`/api/v1/documents/${safeDatasetId}/${safeDocumentId}`, {
+      headers: { Accept: 'application/pdf,application/octet-stream' },
+    });
+    return responseAsset(original);
+  }
 }
