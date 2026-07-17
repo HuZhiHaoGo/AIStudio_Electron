@@ -14,7 +14,7 @@
         "supportsConversation": true,
         "supportsWorkflow": false,
         "supportsCompletion": false,
-        "supportsFileUpload": false,
+        "supportsFileUpload": true,
         "supportsFeedback": true,
         "supportsSuggestedQuestions": false,
         "supportsSpeechToText": false,
@@ -23,7 +23,7 @@
         "supportsHitl": false,
         "inputFields": [],
         "fileUpload": {
-          "enabled": false,
+          "enabled": true,
           "allowedFileTypes": [
             "image"
           ],
@@ -36,8 +36,8 @@
             ".SVG"
           ],
           "allowedUploadMethods": [
-            "local_file",
-            "remote_url"
+            "remote_url",
+            "local_file"
           ],
           "numberLimits": 3,
           "fileSizeLimitMb": 15,
@@ -49,7 +49,7 @@
         "openingSuggestedQuestions": []
       },
       "createdAt": "2026-06-22T00:00:00.000Z",
-      "updatedAt": "2026-07-15T09:42:05.884Z"
+      "updatedAt": "2026-07-17T00:58:32.652Z"
     },
     {
       "id": "8e34c231-5a77-49b8-a60f-eeb1ef5e5c44",
@@ -100,7 +100,59 @@
         "openingSuggestedQuestions": []
       },
       "createdAt": "2026-07-15T09:16:21.340Z",
-      "updatedAt": "2026-07-15T09:42:05.884Z"
+      "updatedAt": "2026-07-17T00:58:32.652Z"
+    },
+    {
+      "id": "d125317e-353b-4ecf-8721-8511ffcc8fd7",
+      "name": "Knowledge Retrieval + Chatbot ",
+      "apiBaseUrl": "http://localhost/v1",
+      "apiKey": "app-p5N9Y7m8750C5Al9AYt4cBgB",
+      "userId": "desktop-demo-user",
+      "mode": "advanced-chat",
+      "description": "",
+      "iconUrl": "",
+      "capabilities": {
+        "loaded": true,
+        "supportsConversation": true,
+        "supportsWorkflow": false,
+        "supportsCompletion": false,
+        "supportsFileUpload": true,
+        "supportsFeedback": true,
+        "supportsSuggestedQuestions": false,
+        "supportsSpeechToText": false,
+        "supportsTextToSpeech": false,
+        "supportsAnnotations": true,
+        "supportsHitl": false,
+        "inputFields": [],
+        "fileUpload": {
+          "enabled": true,
+          "allowedFileTypes": [
+            "image",
+            "document"
+          ],
+          "allowedFileExtensions": [
+            ".JPG",
+            ".JPEG",
+            ".PNG",
+            ".GIF",
+            ".WEBP",
+            ".SVG"
+          ],
+          "allowedUploadMethods": [
+            "remote_url",
+            "local_file"
+          ],
+          "numberLimits": 3,
+          "fileSizeLimitMb": 15,
+          "imageFileSizeLimitMb": 10,
+          "audioFileSizeLimitMb": 50,
+          "videoFileSizeLimitMb": 100
+        },
+        "openingStatement": "",
+        "openingSuggestedQuestions": []
+      },
+      "createdAt": "2026-07-17T00:18:56.926Z",
+      "updatedAt": "2026-07-17T00:58:32.653Z"
     }
   ],
   "translationWebUrl": "https://www.wenxiaobai.com/"

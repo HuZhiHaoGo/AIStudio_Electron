@@ -584,6 +584,7 @@ button {
   min-height: 112px;
   height: 112px;
   padding: 10px 14px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 /* 会话标题和操作保持在同一行，助手选择器单独占满下方。 */
@@ -596,7 +597,7 @@ button {
 }
 
 /* 自绘助手选择器：避免原生 select 在 Windows 上的突兀样式和文字截断。 */
-.assistant-picker { position: relative; min-width: 0; z-index: 5; }
+.assistant-picker { position: relative; width: 100%; min-width: 0; max-width: 100%; justify-self: stretch; z-index: 5; }
 .assistant-picker-trigger {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -1273,11 +1274,15 @@ button {
   background: rgba(145, 54, 47, 0.1);
 }
 
+/* 消息区容器负责回到底部按钮的定位，不再受输入框和上传按钮高度影响。 */
+.messages-shell { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.messages-shell .messages { height: 100%; }
+
 /* 回到底部按钮：消息滚动不在底部时浮现，帮助用户快速回到最新消息。 */
 .scroll-bottom-button {
   position: absolute;
   right: 42px;
-  bottom: 140px;
+  bottom: 18px;
   z-index: 2;
   min-height: 36px;
   border: 1px solid var(--border-color);

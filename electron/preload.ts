@@ -35,7 +35,6 @@ contextBridge.exposeInMainWorld('difyApi', {
 
   // 删除会话以及会话下的消息。
   deleteConversation: (conversationId: string) => ipcRenderer.invoke('conversation:delete', conversationId),
-  syncConversations: (request: { assistantId: string }) => ipcRenderer.invoke('conversation:sync', request),
 
   // 发送消息给 Main，由 Main 保存记录并调用 Dify。
   sendMessage: (request: SendMessageRequest) => ipcRenderer.invoke('message:send', request),

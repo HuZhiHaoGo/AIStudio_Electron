@@ -29,6 +29,7 @@ import { useMessageStreaming } from './hooks/useMessageStreaming';
 import { useScrollToBottom } from './hooks/useScrollToBottom';
 import { useStatusMessage } from './hooks/useStatusMessage';
 import { difyApiClient } from './services/difyApiClient';
+import { buildFileAccept } from './utils/fileAccept';
 
 // 左侧“助手配置”表单使用的数据结构。
 type AssistantForm = {
@@ -386,13 +387,6 @@ export function App() {
     });
   }
 
-  async function syncConversations() {
-    if (!selectedAssistant) return;
-    setNotice('正在同步 Dify 会话…');
-    try { setData(await difyApiClient.syncConversations({ assistantId: selectedAssistant.id })); setNotice('会话同步完成'); }
-    catch (err) { setError(err instanceof Error ? err.message : '会话同步失败。'); }
-  }
-
   async function refreshAssistant() {
     if (!selectedAssistant) return;
     setIsSaving(true);
@@ -404,7 +398,12 @@ export function App() {
 
   async function uploadFile(file: File) {
     if (!selectedAssistant) throw new Error('请先选择助手。');
-    const limitMb = capabilities?.fileUpload.fileSizeLimitMb;
+    const mimeType = file.type.toLowerCase();
+    const typeLimitMb = mimeType.startsWith('image/') ? capabilities?.fileUpload.imageFileSizeLimitMb
+      : mimeType.startsWith('audio/') ? capabilities?.fileUpload.audioFileSizeLimitMb
+      : mimeType.startsWith('video/') ? capabilities?.fileUpload.videoFileSizeLimitMb
+      : undefined;
+    const limitMb = typeLimitMb ?? capabilities?.fileUpload.fileSizeLimitMb;
     if (limitMb && file.size > limitMb * 1024 * 1024) throw new Error(`${file.name} 超过 ${limitMb} MB 限制。`);
     const attachment = await difyApiClient.uploadFile({ assistantId: selectedAssistant.id, name: file.name, mimeType: file.type, bytes: new Uint8Array(await file.arrayBuffer()) });
     return attachment;
@@ -785,7 +784,6 @@ export function App() {
                   <button className="icon-button" type="button" title="新会话" onClick={createConversation}>
                     <MessageSquarePlus size={18} />
                   </button>
-                  {capabilities?.supportsConversation ? <button className="icon-button secondary-icon" type="button" title="同步 Dify 会话" onClick={() => void syncConversations()}><RefreshCw size={17} /></button> : null}
                 </div>
               </div>
               <AssistantPicker
@@ -805,6 +803,8 @@ export function App() {
                   className={`conversation-item ${conversation.id === selectedConversationId ? 'active' : ''}`}
                   key={conversation.id}
                   type="button"
+                  title={conversation.title}
+                  aria-label={`${conversation.title}，更新于 ${formatTime(conversation.updatedAt)}`}
                   onClick={() => setSelectedConversationId(conversation.id)}
                 >
                   <span>{conversation.title}</span>
@@ -826,7 +826,7 @@ export function App() {
           <section className="chat-pane" aria-label="聊天窗口">
             <header className="chat-header">
               <div>
-                <h2>{selectedConversation?.title || '聊天窗口'}</h2>
+                <h2 title={selectedConversation?.title || '聊天窗口'}>{selectedConversation?.title || '聊天窗口'}</h2>
                 <p>{selectedConversation?.difyConversationId ? `已连接 ${activeAssistantName} 上下文` : '本地新会话'}</p>
               </div>
               {selectedConversation && (
@@ -841,6 +841,7 @@ export function App() {
               )}
             </header>
 
+            <div className="messages-shell">
             <div className="messages" ref={messagesRef} onScroll={handleMessagesScroll}>
               {messages.length === 0 && (
                 <div className="welcome">
@@ -916,6 +917,7 @@ export function App() {
                 回到底部
               </button>
             )}
+            </div>
 
             {renderStatusBanner()}
 
@@ -931,7 +933,7 @@ export function App() {
               allowUpload={Boolean(capabilities?.supportsFileUpload)}
               files={pendingFiles}
               uploading={isUploading}
-              accept={capabilities?.fileUpload.allowedFileExtensions.map((ext) => ext.startsWith('.') ? ext : `.${ext}`).join(',')}
+              accept={buildFileAccept(capabilities?.fileUpload.allowedFileExtensions, capabilities?.fileUpload.allowedFileTypes)}
               onChange={setInput}
               onSend={() => void sendMessage()}
               onStop={() => void stopCurrentMessage()}

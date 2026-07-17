@@ -8,7 +8,6 @@ export type SaveSettingsRequest = { translationWebUrl: string };
 export type RefreshAssistantRequest = { assistantId: string };
 export type RefreshAllAssistantsResult = { data: AppData; refreshed: number; failed: string[] };
 export type RenameConversationRequest = { conversationId: string; title: string };
-export type SyncConversationsRequest = { assistantId: string };
 export type SendMessageRequest = {
   assistantId: string; conversationId: string; query: string; streamId?: string;
   inputs?: Record<string, unknown>; files?: MessageAttachment[];
@@ -32,7 +31,6 @@ export type DifyApiBridge = {
   createConversation(assistantId: string): Promise<AppData>;
   renameConversation(request: RenameConversationRequest): Promise<AppData>;
   deleteConversation(conversationId: string): Promise<AppData>;
-  syncConversations(request: SyncConversationsRequest): Promise<AppData>;
   sendMessage(request: SendMessageRequest): Promise<AppData>;
   stopMessage(streamId: string): Promise<StopMessageResult>;
   uploadFile(request: UploadFileRequest): Promise<MessageAttachment>;

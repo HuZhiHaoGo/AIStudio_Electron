@@ -45,7 +45,7 @@ export function AssistantPicker({ assistants, value, syncError, onChange }: Prop
         aria-haspopup="listbox"
         aria-expanded={open}
         disabled={!assistants.length}
-        title={syncError || selected?.name || '选择助手'}
+        title={selected?.name || syncError || '选择助手'}
         onClick={() => setOpen((current) => !current)}
       >
         <span className="assistant-picker-avatar"><Bot size={17} /></span>
@@ -64,6 +64,8 @@ export function AssistantPicker({ assistants, value, syncError, onChange }: Prop
                 type="button"
                 role="option"
                 aria-selected={active}
+                aria-label={`${assistant.name}，${modeNames[assistant.mode] || assistant.mode}`}
+                title={assistant.name}
                 key={assistant.id}
                 onClick={() => {
                   onChange(assistant.id);

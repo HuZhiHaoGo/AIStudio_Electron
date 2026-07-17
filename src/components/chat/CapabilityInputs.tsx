@@ -1,4 +1,5 @@
 import type { DifyInputField, MessageAttachment } from '../../../shared/types/app';
+import { buildFileAccept } from '../../utils/fileAccept';
 
 type Props = {
   fields: DifyInputField[];
@@ -28,7 +29,7 @@ export function CapabilityInputs({ fields, values, disabled, onChange, onUpload 
             ) : field.type === 'number' ? (
               <input type="number" disabled={disabled} required={field.required} value={String(values[field.variable] ?? field.default ?? '')} onChange={(event) => set(field.variable, event.target.value === '' ? '' : Number(event.target.value))} />
             ) : field.type === 'file' || field.type === 'file-list' ? (
-              <input type="file" disabled={disabled} required={field.required} multiple={field.type === 'file-list'} accept={field.allowedFileExtensions?.map((ext) => ext.startsWith('.') ? ext : `.${ext}`).join(',')} onChange={async (event) => {
+              <input type="file" disabled={disabled} required={field.required} multiple={field.type === 'file-list'} accept={buildFileAccept(field.allowedFileExtensions, field.allowedFileTypes)} onChange={async (event) => {
                 const uploads = await Promise.all(Array.from(event.target.files || []).map(onUpload));
                 const mapped = uploads.map((file) => ({ type: file.type, transfer_method: 'local_file', upload_file_id: file.uploadFileId }));
                 set(field.variable, field.type === 'file' ? mapped[0] : mapped);
