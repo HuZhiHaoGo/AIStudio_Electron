@@ -40,8 +40,6 @@ export function createWindow({ isDev, devServerUrl }: CreateWindowOptions) {
       contextIsolation: true,
       // 禁止网页直接使用 Node.js；React 页面不能随便读写本地文件。
       nodeIntegration: false,
-      // 允许使用 webview 标签；项目的翻译页面需要嵌入外部网页。
-      webviewTag: true,
     },
   });
 

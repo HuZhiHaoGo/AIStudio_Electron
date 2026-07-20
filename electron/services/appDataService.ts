@@ -34,9 +34,6 @@ export function defaultData(): AppData {
     conversations: [],
     messages: [],
     annotations: [],
-    settings: {
-      translationWebUrl: '',
-    },
   };
 }
 
@@ -54,9 +51,6 @@ export async function readData(): Promise<AppData> {
       conversations: data.conversations || [],
       messages: migrateStoredMessages(data.messages || []),
       annotations: data.annotations || [],
-      settings: {
-        translationWebUrl: adminConfig.translationWebUrl,
-      },
     };
   } catch (error) {
     const errorCode = error && typeof error === 'object' && 'code' in error ? error.code : '';
@@ -68,9 +62,6 @@ export async function readData(): Promise<AppData> {
     const data = {
       ...defaultData(),
       assistants: adminConfig.assistants,
-      settings: {
-        translationWebUrl: adminConfig.translationWebUrl,
-      },
     };
     await writeData(data);
     return data;
@@ -85,9 +76,6 @@ export async function writeData(data: AppData) {
     conversations: data.conversations,
     messages: data.messages,
     annotations: data.annotations,
-    settings: {
-      translationWebUrl: '',
-    },
   };
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });

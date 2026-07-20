@@ -1,6 +1,6 @@
 import type {
   AnnotationRequest, DeleteAnnotationRequest, DownloadFileRequest, HitlSubmitRequest,
-  MessageFeedbackRequest, RenameConversationRequest, SaveAssistantRequest, SaveSettingsRequest,
+  MessageFeedbackRequest, RenameConversationRequest, SaveAssistantRequest,
   SendMessageRequest, UploadFileRequest, MessageStreamChunk,
   VerifySettingsPasswordRequest,
   RagflowDocumentRequest, RagflowImageRequest,
@@ -9,7 +9,6 @@ import type {
 export const difyApiClient = {
   getData: () => window.difyApi.getData(),
   saveAssistant: (request: SaveAssistantRequest) => window.difyApi.saveAssistant(request),
-  saveSettings: (request: SaveSettingsRequest) => window.difyApi.saveSettings(request),
   verifySettingsPassword: (request: VerifySettingsPasswordRequest) => window.difyApi.verifySettingsPassword(request),
   loadRagflowImage: (request: RagflowImageRequest) => window.difyApi.loadRagflowImage(request),
   loadRagflowDocument: (request: RagflowDocumentRequest) => window.difyApi.loadRagflowDocument(request),

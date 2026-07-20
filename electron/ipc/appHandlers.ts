@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import type { SaveAssistantRequest, SaveSettingsRequest, VerifySettingsPasswordRequest } from '../../shared/types/ipc';
+import type { SaveAssistantRequest, VerifySettingsPasswordRequest } from '../../shared/types/ipc';
 import { publicData, readData, writeData } from '../services/appDataService';
 import { readAdminConfig, writeAdminConfig } from '../services/adminConfigService';
 import { listDifyAnnotations, loadAssistantProfile } from '../services/dify/client';
@@ -78,12 +78,5 @@ export function registerAppHandlers() {
 
     if (refreshed) await writeAdminConfig(config);
     return { data: publicData(await readData()), refreshed, failed };
-  });
-
-  ipcMain.handle('settings:save', async (_event, request: SaveSettingsRequest) => {
-    const config = await readAdminConfig();
-    config.translationWebUrl = request.translationWebUrl.trim();
-    await writeAdminConfig(config);
-    return publicData(await readData());
   });
 }

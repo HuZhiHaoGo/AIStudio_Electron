@@ -145,14 +145,12 @@ export type Annotation = {
   createdAt?: string;
 };
 
-export type AppSettings = { translationWebUrl: string };
 export type AppData = {
   schemaVersion: 3;
   assistants: Assistant[];
   conversations: Conversation[];
   messages: Message[];
   annotations: Annotation[];
-  settings: AppSettings;
 };
-export type AdminConfig = { assistants: Assistant[]; translationWebUrl: string };
+export type AdminConfig = { assistants: Assistant[] };
 import type { Citation } from './citation';

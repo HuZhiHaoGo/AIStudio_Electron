@@ -23,7 +23,6 @@ export function defaultAdminConfig(): AdminConfig {
         updatedAt: createdAt,
       },
     ],
-    translationWebUrl: process.env.TRANSLATION_WEB_URL || '',
   };
 }
 
@@ -47,7 +46,6 @@ export function normalizeAdminConfig(config: Partial<AdminConfig>): AdminConfig 
       updatedAt: assistant.updatedAt || currentTime,
       });
     }),
-    translationWebUrl: config.translationWebUrl || '',
   };
 }
 

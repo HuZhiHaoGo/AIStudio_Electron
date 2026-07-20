@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
   Check,
-  Languages,
   MessageSquarePlus,
   Pencil,
   Plus,
@@ -28,7 +27,6 @@ import { SuggestedQuestions } from './components/chat/SuggestedQuestions';
 import { Sidebar, type ActiveView } from './components/layout/Sidebar';
 import { StatusBanner } from './components/layout/StatusBanner';
 import { ActionDialog, type ActionDialogField } from './components/shared/ActionDialog';
-import { TranslateWorkspace } from './components/translate/TranslateWorkspace';
 import { useMessageStreaming } from './hooks/useMessageStreaming';
 import { useScrollToBottom } from './hooks/useScrollToBottom';
 import { useStatusMessage } from './hooks/useStatusMessage';
@@ -43,8 +41,6 @@ type AssistantForm = {
   userId: string;
   mode: DifyAppMode;
 };
-
-type SettingsSection = 'assistant' | 'translation';
 
 type PendingDialog = {
   kind: 'rename' | 'delete-conversation' | 'dislike' | 'annotation' | 'settings-login';
@@ -63,9 +59,6 @@ const emptyData: AppData = {
   conversations: [],
   messages: [],
   annotations: [],
-  settings: {
-    translationWebUrl: '',
-  },
 };
 
 // 把 ISO 时间字符串格式化成适合界面显示的中文时间。
@@ -94,20 +87,6 @@ function formatFileSize(size?: number) {
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function normalizeWebUrl(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return '';
-  }
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
-  }
-
-  return `https://${trimmed}`;
-}
-
 function hideStartupWait() {
   const startupWait = document.getElementById('startup-wait');
 
@@ -130,7 +109,6 @@ export function App() {
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState('');
   const [activeView, setActiveView] = useState<ActiveView>('chat');
-  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection>('assistant');
 
   // 左侧助手配置表单。
   const [assistantForm, setAssistantForm] = useState<AssistantForm>({
@@ -140,14 +118,12 @@ export function App() {
     userId: '',
     mode: 'chat',
   });
-  const [translationWebUrl, setTranslationWebUrl] = useState('');
   const [input, setInput] = useState('');
   const [conversationInputs, setConversationInputs] = useState<Record<string, unknown>>({});
   const [pendingFiles, setPendingFiles] = useState<MessageAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [pendingDialog, setPendingDialog] = useState<PendingDialog | null>(null);
   const [isDialogBusy, setIsDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState('');
@@ -185,7 +161,6 @@ export function App() {
   const capabilities = selectedAssistant?.capabilities;
   const requiredInputsReady = (capabilities?.inputFields || []).every((field) => !field.required || conversationInputs[field.variable] !== undefined && conversationInputs[field.variable] !== '');
   const canSend = Boolean(selectedAssistant && selectedConversation && (input.trim() || selectedAssistant.mode === 'workflow') && requiredInputsReady) && !isSending && !isUploading;
-  const translationWebSrc = normalizeWebUrl(data.settings.translationWebUrl);
   const activeAssistantName = selectedAssistant?.name || '助手';
 
   // 页面第一次打开时，从 Electron Main 读取本地数据。
@@ -212,10 +187,6 @@ export function App() {
       });
     }
   }, [isCreatingAssistant, selectedAssistant]);
-
-  useEffect(() => {
-    setTranslationWebUrl(data.settings.translationWebUrl || '');
-  }, [data.settings.translationWebUrl]);
 
   // 切换助手后，如果当前会话不属于这个助手，就自动选择这个助手的第一个会话。
   useEffect(() => {
@@ -304,24 +275,6 @@ export function App() {
     }
   }
 
-  async function saveSettings() {
-    setIsSavingSettings(true);
-    setNotice('');
-    setError('');
-
-    try {
-      const nextData = await difyApiClient.saveSettings({
-        translationWebUrl,
-      });
-      setData(nextData);
-      setNotice('翻译 Web 设置已保存');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '保存设置失败。');
-    } finally {
-      setIsSavingSettings(false);
-    }
-  }
-
   // 点击“新助手”时，只创建一个表单草稿；点保存后才真正写入本地数据。
   function createAssistantDraft() {
     setIsCreatingAssistant(true);
@@ -335,7 +288,6 @@ export function App() {
       mode: 'chat',
     });
     setActiveView('settings');
-    setActiveSettingsSection('assistant');
     setNotice('填写 Dify API 地址和 API Key 后保存，应用名称会自动读取');
   }
 
@@ -653,11 +605,7 @@ export function App() {
           <header className="workspace-header">
             <div>
               <h1>设置</h1>
-              <p>
-                {activeSettingsSection === 'translation'
-                  ? '翻译 Web'
-                  : isCreatingAssistant ? '新增助手' : selectedAssistant?.name || '选择或新建一个助手配置'}
-              </p>
+              <p>{isCreatingAssistant ? '新增助手' : selectedAssistant?.name || '选择或新建一个助手配置'}</p>
             </div>
             <button className="primary-action" type="button" onClick={createAssistantDraft}>
               <Plus size={18} />
@@ -674,15 +622,12 @@ export function App() {
               <div className="assistant-list">
                 {data.assistants.map((assistant) => (
                   <button
-                    className={`assistant-item ${
-                      assistant.id === selectedAssistantId && activeSettingsSection === 'assistant' ? 'active' : ''
-                    }`}
+                    className={`assistant-item ${assistant.id === selectedAssistantId ? 'active' : ''}`}
                     key={assistant.id}
                     type="button"
                     onClick={() => {
                       setIsCreatingAssistant(false);
                       setSelectedAssistantId(assistant.id);
-                      setActiveSettingsSection('assistant');
                     }}
                   >
                     <Bot size={18} />
@@ -690,21 +635,10 @@ export function App() {
                   </button>
                 ))}
 
-                <button
-                  className={`assistant-item translation-setting-item ${
-                    activeSettingsSection === 'translation' ? 'active' : ''
-                  }`}
-                  type="button"
-                  onClick={() => setActiveSettingsSection('translation')}
-                >
-                  <Languages size={18} />
-                  <span>翻译网页</span>
-                </button>
               </div>
             </aside>
 
             <div className="settings-panels">
-              {activeSettingsSection === 'assistant' && (
               <section className="settings-form-panel">
                 <div className="section-title">
                   <Settings size={17} />
@@ -782,33 +716,6 @@ export function App() {
                   {!data.annotations.some((item) => item.assistantId === selectedAssistant.id) ? <p>暂无标注，可在 AI 回复下方创建。</p> : null}
                 </details> : null}
               </section>
-              )}
-
-              {activeSettingsSection === 'translation' && (
-              <section className="settings-form-panel">
-                <div className="section-title">
-                  <Languages size={17} />
-                  翻译 Web 配置
-                </div>
-                <div className="settings-form-grid">
-                  <label className="wide-field">
-                    Web 地址
-                    <input
-                      value={translationWebUrl}
-                      placeholder="https://translate.example.com"
-                      onChange={(event) => setTranslationWebUrl(event.target.value)}
-                    />
-                  </label>
-                </div>
-
-                <div className="settings-actions">
-                  <button className="save-button" type="button" onClick={saveSettings} disabled={isSavingSettings}>
-                    {isSavingSettings ? <Check size={17} /> : <Save size={17} />}
-                    保存翻译 Web
-                  </button>
-                </div>
-              </section>
-              )}
 
               {renderStatusBanner()}
             </div>
@@ -990,8 +897,6 @@ export function App() {
           </section>
         </section>
       )}
-
-      {activeView === 'translate' && <TranslateWorkspace translationWebSrc={translationWebSrc} />}
 
       {pendingDialog ? (
         <ActionDialog

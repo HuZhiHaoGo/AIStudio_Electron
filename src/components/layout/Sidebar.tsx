@@ -1,7 +1,7 @@
-import { Languages, MessageSquare, Settings } from 'lucide-react';
+import { MessageSquare, Settings } from 'lucide-react';
 import tbeaLogo from '../../LOGO/TBEA3.png';
 
-export type ActiveView = 'chat' | 'settings' | 'translate';
+export type ActiveView = 'chat' | 'settings';
 
 type SidebarProps = {
   activeView: ActiveView;
@@ -24,15 +24,6 @@ export function Sidebar({ activeView, onChangeView }: SidebarProps) {
         >
           <MessageSquare size={22} />
           <span>会话</span>
-        </button>
-        <button
-          className={`sidebar-button ${activeView === 'translate' ? 'active' : ''}`}
-          type="button"
-          title="翻译"
-          onClick={() => onChangeView('translate')}
-        >
-          <Languages size={22} />
-          <span>翻译</span>
         </button>
         <button
           className={`sidebar-button ${activeView === 'settings' ? 'active' : ''}`}

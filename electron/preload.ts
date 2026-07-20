@@ -7,7 +7,6 @@ import type {
   MessageFeedbackRequest,
   MessageStreamChunk,
   SaveAssistantRequest,
-  SaveSettingsRequest,
   SendMessageRequest,
   UploadFileRequest,
   VerifySettingsPasswordRequest,
@@ -27,8 +26,6 @@ contextBridge.exposeInMainWorld('difyApi', {
   // 保存左侧助手配置。
   saveAssistant: (request: SaveAssistantRequest) => ipcRenderer.invoke('assistant:save', request),
 
-  // 保存全局设置。
-  saveSettings: (request: SaveSettingsRequest) => ipcRenderer.invoke('settings:save', request),
   verifySettingsPassword: (request: VerifySettingsPasswordRequest) => ipcRenderer.invoke('settings:verify-password', request),
   loadRagflowImage: (request: RagflowImageRequest) => ipcRenderer.invoke('ragflow:image', request),
   loadRagflowDocument: (request: RagflowDocumentRequest) => ipcRenderer.invoke('ragflow:document', request),

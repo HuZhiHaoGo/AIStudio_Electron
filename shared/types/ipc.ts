@@ -5,7 +5,6 @@ import type { DifySseEvent } from './dify';
 import type { RagflowAsset } from './citation';
 
 export type SaveAssistantRequest = { id?: string; name: string; apiBaseUrl: string; apiKey: string; userId: string; mode: DifyAppMode };
-export type SaveSettingsRequest = { translationWebUrl: string };
 export type RefreshAssistantRequest = { assistantId: string };
 export type RefreshAllAssistantsResult = { data: AppData; refreshed: number; failed: string[] };
 export type RenameConversationRequest = { conversationId: string; title: string };
@@ -29,7 +28,6 @@ export type RagflowDocumentRequest = { datasetId: string; documentId: string; fi
 export type DifyApiBridge = {
   getData(): Promise<AppData>;
   saveAssistant(request: SaveAssistantRequest): Promise<AppData>;
-  saveSettings(request: SaveSettingsRequest): Promise<AppData>;
   verifySettingsPassword(request: VerifySettingsPasswordRequest): Promise<boolean>;
   loadRagflowImage(request: RagflowImageRequest): Promise<RagflowAsset>;
   loadRagflowDocument(request: RagflowDocumentRequest): Promise<RagflowAsset>;
