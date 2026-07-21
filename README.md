@@ -208,18 +208,26 @@ AIStudio_Electron/
 │  └─ preload.ts                  渲染进程安全桥
 ├─ prisma/                        Prisma 数据模型
 ├─ scripts/                       启动、等待和打包辅助脚本
-├─ shared/types/                  前后端共享类型
+├─ shared/
+│  ├─ ipc/                        IPC 频道名称
+│  └─ types/                      前后端共享数据和 IPC 契约
 ├─ src/                           React 渲染进程
 │  ├─ components/
-│  │  ├─ chat/                    会话、输入和消息操作
+│  │  ├─ chat/                    可复用的消息输入和消息操作
 │  │  ├─ citations/               富引用卡片和原文查看器
 │  │  ├─ layout/                  页面布局组件
 │  │  ├─ markdown/                Markdown/KaTeX/Mermaid 渲染
 │  │  └─ shared/                  通用对话框等组件
+│  ├─ features/
+│  │  ├─ assistants/              助手设置视图和表单类型
+│  │  ├─ chat/                    聊天工作区
+│  │  └─ conversations/           会话导航
 │  ├─ hooks/                      流式状态、滚动和提示逻辑
 │  ├─ services/                   前端 IPC 调用封装
+│  ├─ styles/                     按功能拆分的样式文件
 │  ├─ utils/                      前端工具函数
-│  ├─ App.tsx                     页面状态和主要业务流程
+│  ├─ App.tsx                     应用状态、业务命令和视图组合
+│  ├─ styles.css                  样式加载顺序入口
 │  └─ main.tsx                    React 入口
 ├─ .env.example                   环境变量模板
 ├─ package.json                   依赖、命令和打包配置
@@ -270,7 +278,7 @@ src/components/citations/SourceViewer.tsx
 npm test
 ```
 
-当前仓库包含 18 个测试文件，覆盖：
+当前仓库的自动化测试覆盖：
 
 - Dify 能力解析、SSE 拆包和事件聚合。
 - Chatflow、Workflow、HITL、附件和结构化引用。

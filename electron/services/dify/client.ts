@@ -1,4 +1,5 @@
 import type { WebContents } from 'electron';
+import { IPC_CHANNELS } from '../../../shared/ipc/channels';
 import type {
   Annotation, Assistant, DifyAppMode, DifyCapabilities, HitlRequest, MessageAttachment,
   MessageFeedbackRating,
@@ -96,7 +97,7 @@ export async function runDifyApp(assistant: Assistant, input: RunInput, stream: 
   const dispatch = (events: DifySseEvent[]) => {
     for (const event of events) {
       const content = accumulator.consume(event);
-      if (stream.streamId) stream.sender.send('message:stream-chunk', { streamId: stream.streamId, content, event });
+      if (stream.streamId) stream.sender.send(IPC_CHANNELS.messageStreamChunk, { streamId: stream.streamId, content, event });
     }
   };
 

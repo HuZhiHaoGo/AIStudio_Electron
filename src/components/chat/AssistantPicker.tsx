@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bot, Check, ChevronDown } from 'lucide-react';
-import type { Assistant } from '../../../shared/types/app';
+import type { PublicAssistant } from '../../../shared/types/app';
 
 type Props = {
-  assistants: Assistant[];
+  assistants: PublicAssistant[];
   value: string;
   syncError?: string;
   onChange: (assistantId: string) => void;
 };
 
-const modeNames: Record<Assistant['mode'], string> = {
+const modeNames: Record<PublicAssistant['mode'], string> = {
   chat: '聊天助手',
   'advanced-chat': 'Chatflow',
   'agent-chat': 'Agent',

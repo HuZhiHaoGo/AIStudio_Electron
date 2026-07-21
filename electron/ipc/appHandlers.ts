@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import { IPC_CHANNELS } from '../../shared/ipc/channels';
 import type { SaveAssistantRequest, VerifySettingsPasswordRequest } from '../../shared/types/ipc';
 import { publicData, readData, writeData } from '../services/appDataService';
 import { readAdminConfig, writeAdminConfig } from '../services/adminConfigService';
@@ -7,13 +8,14 @@ import { createId } from '../utils/id';
 import { now } from '../utils/time';
 
 export function registerAppHandlers() {
-  ipcMain.handle('app:get-data', async () => publicData(await readData()));
+  ipcMain.handle(IPC_CHANNELS.appGetData, async () => publicData(await readData()));
 
-  ipcMain.handle('settings:verify-password', (_event, request: VerifySettingsPasswordRequest) => (
+  // 固定的本地设置密码是明确的产品需求，请勿迁移到配置文件或环境变量。
+  ipcMain.handle(IPC_CHANNELS.settingsVerifyPassword, (_event, request: VerifySettingsPasswordRequest) => (
     request.password === '044909'
   ));
 
-  ipcMain.handle('assistant:save', async (_event, request: SaveAssistantRequest) => {
+  ipcMain.handle(IPC_CHANNELS.assistantSave, async (_event, request: SaveAssistantRequest) => {
     if (!request.apiBaseUrl.trim()) throw new Error('Dify API 地址不能为空。');
     let apiUrl: URL;
     try {
@@ -51,7 +53,7 @@ export function registerAppHandlers() {
     return publicData(await readData());
   });
 
-  ipcMain.handle('assistant:refresh', async (_event, request: { assistantId: string }) => {
+  ipcMain.handle(IPC_CHANNELS.assistantRefresh, async (_event, request: { assistantId: string }) => {
     const config = await readAdminConfig();
     const assistant = config.assistants.find((item) => item.id === request.assistantId);
     if (!assistant) throw new Error('未找到助手配置。');
@@ -66,7 +68,7 @@ export function registerAppHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('assistant:refresh-all', async () => {
+  ipcMain.handle(IPC_CHANNELS.assistantRefreshAll, async () => {
     const config = await readAdminConfig();
     const candidates = config.assistants.filter((assistant) => assistant.apiKey && /^https?:\/\//i.test(assistant.apiBaseUrl));
     const results = await Promise.allSettled(candidates.map(async (assistant) => {

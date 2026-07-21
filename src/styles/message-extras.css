@@ -1,0 +1,76 @@
+/* 消息扩展层：HITL、消息操作、图片、Mermaid 和最终输入框状态。 */
+.hitl-card { display: grid; gap: 9px; margin-top: 10px; border: 1px solid #e9b765; border-radius: 8px; padding: 12px; background: #fff9eb; }
+.hitl-card h4 { display: flex; align-items: center; gap: 6px; margin: 0; color: #875817; }
+.hitl-card p { margin: 0; } .hitl-card label { display: grid; gap: 4px; font-size: 12px; }
+.hitl-card div, .message-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.hitl-card button, .message-actions button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border-color); border-radius: 7px; padding: 5px 9px; background: #fff; color: var(--primary); }
+.message-actions { margin-top: 8px; }
+.message-actions button { border-color: transparent; color: var(--text-muted); font-size: 12px; background: transparent; }
+.message.user .user-message-actions { position: absolute; right: calc(100% + 8px); bottom: 7px; display: flex; flex-wrap: nowrap; gap: 2px; margin: 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 3px; background: #fff; box-shadow: 0 6px 18px rgba(35, 49, 64, .14); opacity: 0; pointer-events: none; transform: translateX(4px); transition: opacity 140ms ease, transform 140ms ease; }
+.message.user .user-message-actions::after { content: ''; position: absolute; top: 0; right: -10px; width: 10px; height: 100%; }
+.message.user:hover .user-message-actions, .message.user .bubble:focus-within .user-message-actions { opacity: 1; pointer-events: auto; transform: translateX(0); }
+.message.user .user-message-actions button { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; padding: 0; color: var(--primary); }
+.message.user .user-message-actions button:hover { border-color: var(--border-color); background: var(--primary-soft); }
+.message.user .user-message-actions button:disabled { opacity: .5; }
+.message-copy-scope { user-select: text; }
+.selection-copy-popup { position: fixed; z-index: 120; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; color: var(--primary); background: #fff; box-shadow: 0 8px 24px rgba(35, 49, 64, .2); font-size: 12px; font-weight: 700; transform: translateX(-50%); }
+.selection-copy-popup:hover { border-color: var(--primary); background: var(--primary-soft); }
+
+.markdown-image { display: block; max-width: min(100%, 720px); max-height: 480px; border-radius: 8px; object-fit: contain; cursor: zoom-in; }
+.code-block { position: relative; overflow: auto; }
+.code-block > button { position: absolute; top: 6px; right: 6px; z-index: 1; border: 1px solid #53687b; border-radius: 5px; padding: 3px 7px; color: #dbe8f2; background: #243b4d; font-size: 11px; }
+.mermaid-block { overflow: auto; max-width: 100%; padding: 10px; background: #fff; }
+.mermaid-block svg { max-width: 100%; height: auto; }
+.think-block { border-left: 3px solid #8795a5; padding-left: 10px; color: var(--text-muted); }
+
+/* 消息输入框：支持多行输入和手动调整高度，聚焦时用主色描边提示可输入。 */
+.composer textarea {
+  width: 100%;
+  min-height: 74px;
+  max-height: 180px;
+  resize: vertical;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  outline: none;
+}
+
+.composer textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47, 111, 143, 0.14);
+}
+
+.composer textarea:disabled {
+  color: #8593a3;
+  background: #eef2f5;
+  cursor: not-allowed;
+}
+
+/* 发送按钮：普通状态发送消息，.stop 状态用于中止流式生成。 */
+.send-button {
+  width: 48px;
+  height: 48px;
+  align-self: end;
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.send-button:hover:not(:disabled) {
+  background: #255c78;
+}
+
+.send-button.stop {
+  background: #b94136;
+}
+
+.send-button.stop:hover:not(:disabled) {
+  background: #9f3028;
+}
+
+.send-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.composer-input-wrap.has-upload textarea { padding-bottom: 48px; }

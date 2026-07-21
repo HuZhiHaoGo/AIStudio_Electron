@@ -1,0 +1,276 @@
+.message.user .attachment-link {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.message.user .attachment-link:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.message.user .attachment-link small {
+  color: #d7edf5;
+}
+
+.message.user .suggested-questions {
+  border-top-color: rgba(255, 255, 255, 0.24);
+}
+
+.message.user .suggested-questions-title,
+.message.user .suggested-questions-title svg {
+  color: #d7edf5;
+}
+
+.message.user .suggested-question {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.message.user .message-feedback {
+  border-top-color: rgba(255, 255, 255, 0.24);
+}
+
+/* 错误消息气泡：请求失败、接口异常等错误状态的消息展示。 */
+.bubble.error {
+  border-color: #f0b4ad;
+  color: #91362f;
+  background: #fff1ef;
+}
+
+/* 弱化消息气泡：用于“正在生成”等临时或说明性内容，降低视觉权重。 */
+.bubble.muted {
+  color: #6b7c8e;
+}
+
+/* Markdown 内容容器：统一聊天消息中段落、列表、代码块、表格等富文本的间距。 */
+.markdown-body {
+  display: grid;
+  gap: 8px;
+}
+
+/* Markdown 元素重置：移除浏览器默认外边距，避免气泡内部间距失控。 */
+.markdown-body p,
+.markdown-body ul,
+.markdown-body blockquote,
+.markdown-body pre,
+.markdown-body table,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5 {
+  margin: 0;
+}
+
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5 {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Markdown 列表和引用：用于模型回答中的条目、说明和引用内容。 */
+.markdown-body ul {
+  display: grid;
+  gap: 4px;
+  padding-left: 20px;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid #8fb5c7;
+  padding-left: 10px;
+  color: var(--text-muted);
+}
+
+/* Markdown 代码块：长代码横向滚动，避免撑宽消息气泡。 */
+.markdown-body pre {
+  overflow: auto;
+  max-width: 100%;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #edf7ff;
+  background: #182b3a;
+}
+
+/* Markdown 行内代码：用于短命令、变量名、路径等内容的浅色标记。 */
+.markdown-body code {
+  border-radius: 5px;
+  padding: 2px 5px;
+  color: #18374d;
+  background: #eaf1f5;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.92em;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+}
+
+/* Markdown 表格：适配模型返回的结构化数据，窄空间内允许横向滚动。 */
+.markdown-body table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--border-color);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-body th {
+  color: #18374d;
+  background: #eaf1f5;
+  font-weight: 700;
+}
+
+.markdown-body tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.markdown-body a {
+  color: #1f6f96;
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+/* 用户消息中的 Markdown 覆盖：保证深色气泡内代码、链接、表格仍然可读。 */
+/* 富文本扩展层：用户气泡覆盖、状态提示和消息输入区基础布局。 */
+.message.user .markdown-body code {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.message.user .markdown-body a {
+  color: #d8fbff;
+}
+
+.message.user .markdown-body th,
+.message.user .markdown-body td {
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.message.user .markdown-body th,
+.message.user .markdown-body tr:nth-child(even) td {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* 状态提示条：显示保存成功、连接状态、发送异常等可关闭的全局反馈。 */
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 28px 12px;
+  padding: 10px 12px;
+  border: 1px solid #b9d9cf;
+  border-radius: 8px;
+  color: #17624e;
+  background: #edf9f5;
+}
+
+.status-banner span {
+  min-width: 0;
+}
+
+/* 状态提示关闭按钮：保持在提示条右侧，点击后隐藏当前反馈。 */
+.status-banner button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.status-banner button:hover {
+  background: rgba(23, 98, 78, 0.1);
+}
+
+/* 错误状态提示条：用于保存失败、发送失败、下载失败等异常反馈。 */
+.status-banner.error {
+  border-color: #f0b4ad;
+  color: #91362f;
+  background: #fff1ef;
+}
+
+.status-banner.error button:hover {
+  background: rgba(145, 54, 47, 0.1);
+}
+
+/* 消息区容器负责回到底部按钮的定位，不再受输入框和上传按钮高度影响。 */
+.messages-shell { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.messages-shell .messages { height: 100%; }
+
+/* 回到底部按钮：消息滚动不在底部时浮现，帮助用户快速回到最新消息。 */
+.scroll-bottom-button {
+  position: absolute;
+  right: 42px;
+  bottom: 18px;
+  z-index: 2;
+  min-height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(35, 49, 64, 0.14);
+}
+
+.scroll-bottom-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 消息输入区：文本域占满剩余宽度，右侧固定发送/停止按钮。 */
+.composer {
+  display: grid;
+  gap: 12px;
+  padding: 18px 28px 24px;
+  border-top: 1px solid var(--border-color);
+  background: #ffffff;
+}
+.attachment-link.disabled { cursor: default; opacity: 0.72; }
+.attachment-link.disabled:hover { border-color: var(--border-color); background: var(--card-bg); }
+
+.composer-main { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 12px; align-items: end; }
+.composer-input-wrap { position: relative; min-width: 0; }
+.composer-files { display: flex; flex-wrap: wrap; gap: 8px; }
+.composer-files span { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-color); border-radius: 8px; padding: 5px 8px; font-size: 12px; }
+.composer-files button { display: grid; place-items: center; border: 0; padding: 0; background: transparent; color: #8c3b36; }
+.upload-button { position: absolute; left: 10px; bottom: 9px; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; border: 0; border-radius: 7px; padding: 0 9px; color: var(--primary); background: var(--primary-soft); cursor: pointer; font-size: 12px; font-weight: 700; }
+.upload-button:hover { background: #d9eaff; }
+.upload-button.disabled { opacity: 0.55; cursor: not-allowed; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.capability-inputs { margin: 0 28px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; background: #fff; max-height: 210px; overflow: auto; }
+.capability-inputs summary, .message-details > summary { cursor: pointer; color: var(--primary); font-weight: 700; }
+.capability-input-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 10px; padding-top: 10px; }
+.capability-input-grid label { display: grid; gap: 5px; color: var(--text-muted); font-size: 12px; }
+.capability-input-grid input, .capability-input-grid textarea, .capability-input-grid select, .hitl-card input { min-height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 9px; background: #fff; }
+
+.message-details { margin: 0 0 10px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; background: #f8fbff; }
+.trace-list { display: grid; gap: 6px; margin-top: 8px; }
+.trace-item { border-left: 3px solid #8aa5b8; padding-left: 8px; }
+.trace-item.success { border-color: #52a383; } .trace-item.failed { border-color: #cf5b50; }
+.trace-item pre { max-height: 220px; overflow: auto; white-space: pre-wrap; font-size: 12px; }
+.citations blockquote { margin: 8px 0 0; border-left: 3px solid var(--primary); padding-left: 10px; }
+.citations p { margin: 4px 0; }

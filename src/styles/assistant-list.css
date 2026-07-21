@@ -1,0 +1,202 @@
+/* 助手列表层：品牌、助手选择项和紧凑配置控件。 */
+/* 左侧助手面板：聊天页中展示产品标识、助手列表以及快捷配置入口。 */
+.assistants-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 22px;
+  color: var(--text-main);
+  background: var(--section-bg);
+}
+
+/* 助手面板品牌区：显示应用名称、说明和品牌图标。 */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+
+/* 品牌图标与消息头像的基础居中布局：用于 logo 方块和聊天双方头像。 */
+.brand-icon,
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.brand h1,
+.pane-header h2,
+.chat-header h2,
+.welcome h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.brand h1 {
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.brand p,
+.pane-header p,
+.chat-header p,
+.welcome p {
+  margin: 5px 0 0;
+}
+
+.brand p {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* 主操作按钮：用于新建会话、保存配置、空状态引导等关键操作。 */
+.primary-action,
+.save-button,
+.empty-state button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.primary-action:hover,
+.save-button:hover,
+.empty-state button:hover {
+  background: #003A8F;
+}
+
+/* 助手列表和会话列表：纵向滚动列表，数量较多时保持面板自身滚动。 */
+.assistant-list,
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+/* 聊天页助手列表：限制高度，避免挤压下方设置面板。设置页会覆盖为不限制高度。 */
+.assistant-list {
+  max-height: 210px;
+  padding-right: 2px;
+}
+
+.settings-assistant-list .assistant-list {
+  max-height: none;
+}
+
+/* 助手项和会话项的通用外形：整行可点击，保持文本左对齐和固定圆角。 */
+.assistant-item,
+.conversation-item {
+  width: 100%;
+  min-width: 0;
+  border-radius: 8px;
+  text-align: left;
+}
+
+/* 助手项：用于选择当前 Dify 助手，文本过长时省略显示。 */
+.assistant-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  border: 1px solid transparent;
+  color: var(--text-main);
+  background: var(--card-bg);
+}
+
+.assistant-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 助手项悬停/选中态：用于标识当前对话绑定的助手。 */
+.assistant-item:hover,
+.assistant-item.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+/* 设置页中的助手项：在设置面板内使用白底样式，和聊天页侧栏区分。 */
+.settings-assistant-list .assistant-item {
+  color: var(--text-main);
+  padding: 0 10px;
+  background: #ffffff;
+}
+
+.settings-assistant-list .assistant-item:hover,
+.settings-assistant-list .assistant-item.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+/* 助手面板底部配置块：展示当前服务地址、全局参数等紧凑设置。 */
+.settings-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+/* 紧凑配置块标题：用于助手面板内的小型配置分组。 */
+.panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.settings-panel label {
+  display: grid;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* 紧凑配置输入：用于侧栏内较短的设置项，尺寸比设置页主表单更小。 */
+.settings-panel input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 7px 9px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  outline: none;
+}
+
+.settings-panel input:focus {
+  border-color: var(--primary);
+}
+
+.save-button {
+  margin-top: 2px;
+}
+
+.save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

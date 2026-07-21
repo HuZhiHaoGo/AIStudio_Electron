@@ -153,4 +153,12 @@ export type AppData = {
   annotations: Annotation[];
 };
 export type AdminConfig = { assistants: Assistant[] };
+
+/** 可以安全暴露给渲染进程的助手数据，不包含真实 API Key。 */
+export type PublicAssistant = Omit<Assistant, 'apiKey'>;
+
+/** 渲染进程使用的应用状态；敏感配置始终留在 Electron 主进程。 */
+export type PublicAppData = Omit<AppData, 'assistants'> & {
+  assistants: PublicAssistant[];
+};
 import type { Citation } from './citation';

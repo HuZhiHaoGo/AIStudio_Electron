@@ -1,0 +1,128 @@
+/* 基础层：主题变量、元素重置、应用外壳和主导航。 */
+/* 全局主题变量：供主界面所有控件复用，统一侧栏、页面、卡片、边框、主色和文字颜色。 */
+:root {
+  --sidebar-bg: #003A8F;
+  --page-bg: #F4F8FF;
+  --section-bg: #EAF2FF;
+  --card-bg: #FFFFFF;
+  --border-color: #C9DCFF;
+  --primary: #0052CC;
+  --text-main: #102A43;
+  --text-muted: #53687b;
+  --primary-soft: #D7E8FF;
+  --input-bg: #FFFFFF;
+
+  color: var(--text-main);
+  background: var(--page-bg);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 全局盒模型：避免控件设置 padding/border 后撑破既定宽高。 */
+* {
+  box-sizing: border-box;
+}
+
+/* Electron 主窗口根容器：占满窗口并禁止页面级滚动，滚动交给列表、消息区等内部控件处理。 */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 应用最小宽度：主界面按桌面端工作台布局设计，低于该宽度时保持内容结构稳定。 */
+body {
+  margin: 0;
+  min-width: 1024px;
+}
+
+/* 表单和按钮继承全局字体，保证输入框、文本域、按钮与页面文字一致。 */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* 应用主壳：左侧固定主导航，右侧根据当前功能显示聊天或设置工作区。 */
+.app-shell {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 左侧主导航栏：承载品牌入口、功能切换按钮和底部操作区，始终固定在窗口左侧。 */
+.sidebar {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  min-height: 0;
+  padding: 14px 10px;
+  color: #eaf4ff;
+  background: var(--sidebar-bg);
+}
+
+/* 品牌图标容器：用于显示应用 logo，限制尺寸并保持图片完整展示。 */
+.sidebar-brand {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  color: var(--text-main);
+  background: var(--sidebar-bg);
+  overflow: hidden;
+}
+
+.sidebar-brand img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: contain;
+}
+
+/* 主导航按钮列表：聊天、设置等入口纵向排列。 */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 主导航按钮：图标和短文本居中显示，适合窄侧栏中的功能切换控件。 */
+.sidebar-button {
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  width: 54px;
+  min-height: 54px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #d5e5f2;
+  background: transparent;
+}
+
+.sidebar-button span {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* 主导航按钮悬停/选中态：提示当前所在功能区，同时增强可点击反馈。 */
+.sidebar-button:hover,
+.sidebar-button.active {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.14);
+}

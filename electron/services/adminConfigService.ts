@@ -32,19 +32,19 @@ export function normalizeAdminConfig(config: Partial<AdminConfig>): AdminConfig 
   return {
     assistants: (config.assistants || []).map((assistant, index) => {
       const mode = normalizeMode(assistant.mode, 'chat');
-      return ({
-      id: assistant.id || `assistant-${index + 1}`,
-      name: assistant.name || `助手${index + 1}`,
-      apiBaseUrl: assistant.apiBaseUrl || '',
-      apiKey: assistant.apiKey || '',
-      userId: assistant.userId || 'desktop-demo-user',
-      mode,
-      description: assistant.description || '',
-      iconUrl: assistant.iconUrl || '',
-      capabilities: assistant.capabilities || defaultCapabilities(mode),
-      createdAt: assistant.createdAt || currentTime,
-      updatedAt: assistant.updatedAt || currentTime,
-      });
+      return {
+        id: assistant.id || `assistant-${index + 1}`,
+        name: assistant.name || `助手${index + 1}`,
+        apiBaseUrl: assistant.apiBaseUrl || '',
+        apiKey: assistant.apiKey || '',
+        userId: assistant.userId || 'desktop-demo-user',
+        mode,
+        description: assistant.description || '',
+        iconUrl: assistant.iconUrl || '',
+        capabilities: assistant.capabilities || defaultCapabilities(mode),
+        createdAt: assistant.createdAt || currentTime,
+        updatedAt: assistant.updatedAt || currentTime,
+      };
     }),
   };
 }

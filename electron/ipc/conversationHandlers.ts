@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import { IPC_CHANNELS } from '../../shared/ipc/channels';
 import type { Conversation } from '../../shared/types/app';
 import type { RenameConversationRequest } from '../../shared/types/ipc';
 import { publicData, readData, writeData } from '../services/appDataService';
@@ -7,7 +8,7 @@ import { createId } from '../utils/id';
 import { now } from '../utils/time';
 
 export function registerConversationHandlers() {
-  ipcMain.handle('conversation:create', async (_event, assistantId: string) => {
+  ipcMain.handle(IPC_CHANNELS.conversationCreate, async (_event, assistantId: string) => {
     const data = await readData();
     const currentTime = now();
     data.conversations.unshift({ id: createId(), assistantId, title: '新会话', inputs: {}, createdAt: currentTime, updatedAt: currentTime });
@@ -15,7 +16,7 @@ export function registerConversationHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('conversation:rename', async (_event, request: RenameConversationRequest) => {
+  ipcMain.handle(IPC_CHANNELS.conversationRename, async (_event, request: RenameConversationRequest) => {
     const data = await readData();
     const conversation = data.conversations.find((item) => item.id === request.conversationId);
     const assistant = data.assistants.find((item) => item.id === conversation?.assistantId);
@@ -29,7 +30,7 @@ export function registerConversationHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('conversation:delete', async (_event, conversationId: string) => {
+  ipcMain.handle(IPC_CHANNELS.conversationDelete, async (_event, conversationId: string) => {
     const data = await readData();
     const conversation = data.conversations.find((item) => item.id === conversationId);
     const assistant = data.assistants.find((item) => item.id === conversation?.assistantId);

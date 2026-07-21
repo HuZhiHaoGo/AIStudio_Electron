@@ -1,11 +1,6 @@
-node_modules
-dist
-dist-electron
+node_modules/
+dist/
+dist-electron/
+release/
 .env
 *.log
-release/
-dist/
-node_modules/
-release/
-dist/
-node_modules/

@@ -1,0 +1,166 @@
+/* 工作区层：聊天/设置页面的顶级网格与设置表单。 */
+/* 聊天工作区：左侧助手/会话列表，右侧聊天窗口，是默认主界面布局。 */
+.chat-workspace {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 设置工作区：顶部标题栏 + 内容区。 */
+.settings-workspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--page-bg);
+}
+
+/* 工作区标题栏：设置页顶部的标题、说明和操作按钮区域。 */
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 86px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 20px 28px;
+  background: var(--card-bg);
+}
+
+.workspace-header h1 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.2;
+}
+
+.workspace-header p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* 设置页内容区：左侧助手列表，右侧配置表单。 */
+.settings-content {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 18px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 18px;
+}
+
+/* 设置页的列表面板和表单面板：提供统一边框、圆角和白底承载配置控件。 */
+.settings-assistant-list,
+.settings-form-panel {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--input-bg);
+}
+
+/* 设置页助手列表容器：顶部标题固定，下方列表可滚动，适合助手数量较多的场景。 */
+.settings-assistant-list {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  padding: 14px;
+}
+
+/* 设置页右侧面板组：多个配置面板纵向排列，内容超出时在该区域内部滚动。 */
+.settings-panels {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* 设置表单面板：承载当前助手的具体输入项和保存操作。 */
+.settings-form-panel {
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  align-content: start;
+  gap: 18px;
+  padding: 18px;
+}
+
+/* 小节标题：用于设置表单、侧栏配置块等区域标题，通常搭配图标显示。 */
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* 设置表单网格：两列排列名称、地址、密钥等字段，宽字段可通过 .wide-field 跨列。 */
+.settings-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  max-width: 860px;
+}
+
+/* 设置表单字段：标签在上、输入框在下，强调字段说明和输入控件的关联。 */
+.settings-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* 设置表单输入框：用于 API 地址、Key、应用 ID 等配置项，聚焦时显示主色描边。 */
+.settings-form-grid input,
+.settings-form-grid select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  outline: none;
+}
+
+.settings-form-grid input:focus,
+.settings-form-grid select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47, 111, 143, 0.12);
+}
+
+/* 宽字段：让长文本配置项跨满整行，例如较长的地址、Token 或说明类输入。 */
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+/* 设置页操作区：放置保存、测试、次要操作等按钮，默认从左侧开始排列。 */
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+/* 次要按钮：用于非主流程操作，例如测试连接、打开外部入口等。 */
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--primary);
+  background: #ffffff;
+}
+
+.secondary-action:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}

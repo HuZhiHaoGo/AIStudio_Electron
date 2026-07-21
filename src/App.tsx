@@ -1,46 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Bot,
-  Check,
-  MessageSquarePlus,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Save,
-  Settings,
-  Trash2,
-  UserRound,
-} from 'lucide-react';
-import { MarkdownMessage } from './components/markdown/MarkdownMessage';
-import type { AppData, DifyAppMode, Message, MessageAttachment, MessageFeedbackRating } from '../shared/types/app';
+import type { Message, MessageAttachment, MessageFeedbackRating, PublicAppData } from '../shared/types/app';
 import type { Citation } from '../shared/types/citation';
-import { MessageAttachments } from './components/chat/MessageAttachments';
-import { MessageComposer } from './components/chat/MessageComposer';
-import { SelectionCopyPopup } from './components/chat/SelectionCopyPopup';
-import { MessageFeedback } from './components/chat/MessageFeedback';
-import { CapabilityInputs } from './components/chat/CapabilityInputs';
-import { AssistantPicker } from './components/chat/AssistantPicker';
-import { HitlForm, MessageActions, MessageTraces, UserMessageActions } from './components/chat/MessageDetails';
-import { CitationList } from './components/citations/CitationList';
 import { SourceViewer } from './components/citations/SourceViewer';
-import { SuggestedQuestions } from './components/chat/SuggestedQuestions';
 import { Sidebar, type ActiveView } from './components/layout/Sidebar';
-import { StatusBanner } from './components/layout/StatusBanner';
 import { ActionDialog, type ActionDialogField } from './components/shared/ActionDialog';
+import { AssistantSettingsView } from './features/assistants/AssistantSettingsView';
+import type { AssistantForm } from './features/assistants/types';
+import { ChatPane } from './features/chat/ChatPane';
+import { ConversationSidebar } from './features/conversations/ConversationSidebar';
 import { useMessageStreaming } from './hooks/useMessageStreaming';
 import { useScrollToBottom } from './hooks/useScrollToBottom';
 import { useStatusMessage } from './hooks/useStatusMessage';
 import { difyApiClient } from './services/difyApiClient';
-import { buildFileAccept } from './utils/fileAccept';
-
-// 左侧“助手配置”表单使用的数据结构。
-type AssistantForm = {
-  name: string;
-  apiBaseUrl: string;
-  apiKey: string;
-  userId: string;
-  mode: DifyAppMode;
-};
 
 type PendingDialog = {
   kind: 'rename' | 'delete-conversation' | 'dislike' | 'annotation' | 'settings-login';
@@ -53,39 +24,13 @@ type PendingDialog = {
 };
 
 // React 启动时的空数据，真正数据会从 Electron Main 读取。
-const emptyData: AppData = {
+const emptyData: PublicAppData = {
   schemaVersion: 3,
   assistants: [],
   conversations: [],
   messages: [],
   annotations: [],
 };
-
-// 把 ISO 时间字符串格式化成适合界面显示的中文时间。
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
-}
-
-function formatFileSize(size?: number) {
-  if (!size) {
-    return '';
-  }
-
-  if (size < 1024) {
-    return `${size} B`;
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} MB`;
-}
 
 function hideStartupWait() {
   const startupWait = document.getElementById('startup-wait');
@@ -102,7 +47,7 @@ function hideStartupWait() {
 
 export function App() {
   // data 是整个前端最核心的状态：助手、会话、消息都在这里。
-  const [data, setData] = useState<AppData>(emptyData);
+  const [data, setData] = useState<PublicAppData>(emptyData);
 
   // 当前选中的助手 ID 和会话 ID。
   const [selectedAssistantId, setSelectedAssistantId] = useState('');
@@ -159,10 +104,16 @@ export function App() {
     [data.messages, selectedConversationId],
   );
   const capabilities = selectedAssistant?.capabilities;
-  const requiredInputsReady = (capabilities?.inputFields || []).every((field) => !field.required || conversationInputs[field.variable] !== undefined && conversationInputs[field.variable] !== '');
-  const canSend = Boolean(selectedAssistant && selectedConversation && (input.trim() || selectedAssistant.mode === 'workflow') && requiredInputsReady) && !isSending && !isUploading;
-  const activeAssistantName = selectedAssistant?.name || '助手';
-
+  const requiredInputsReady = (capabilities?.inputFields || []).every(
+    (field) => !field.required
+      || (conversationInputs[field.variable] !== undefined && conversationInputs[field.variable] !== ''),
+  );
+  const canSend = Boolean(
+    selectedAssistant
+      && selectedConversation
+      && (input.trim() || selectedAssistant.mode === 'workflow')
+      && requiredInputsReady,
+  ) && !isSending && !isUploading;
   // 页面第一次打开时，从 Electron Main 读取本地数据。
   useEffect(() => {
     void loadData();
@@ -216,10 +167,6 @@ export function App() {
       requestAnimationFrame(() => scrollMessagesToBottom('smooth'));
     }
   }, [messages, isSending, streamingContent]);
-
-  function renderStatusBanner() {
-    return <StatusBanner notice={notice} error={error} onClose={clearStatus} />;
-  }
 
   // 从 Electron Main 读取完整数据。
   async function loadData() {
@@ -366,9 +313,16 @@ export function App() {
     if (!selectedAssistant) return;
     setIsSaving(true);
     setAssistantSyncStatus('');
-    try { setData(await difyApiClient.refreshAssistant(selectedAssistant.id)); setNotice('应用能力和参数已刷新'); setAssistantSyncStatus(''); }
-    catch (err) { setError(err instanceof Error ? err.message : '应用信息刷新失败。'); setAssistantSyncStatus('应用信息同步失败'); }
-    finally { setIsSaving(false); }
+    try {
+      setData(await difyApiClient.refreshAssistant(selectedAssistant.id));
+      setNotice('应用能力和参数已刷新');
+      setAssistantSyncStatus('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '应用信息刷新失败。');
+      setAssistantSyncStatus('应用信息同步失败');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function uploadFile(file: File) {
@@ -385,13 +339,17 @@ export function App() {
   }
 
   async function chooseFiles(files: File[]) {
-    setIsUploading(true); setError('');
+    setIsUploading(true);
+    setError('');
     try {
       const limit = capabilities?.fileUpload.numberLimits || files.length;
       const uploaded = await Promise.all(files.slice(0, Math.max(0, limit - pendingFiles.length)).map(uploadFile));
       setPendingFiles((current) => [...current, ...uploaded]);
-    } catch (err) { setError(err instanceof Error ? err.message : '文件上传失败。'); }
-    finally { setIsUploading(false); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '文件上传失败。');
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   async function downloadFile(url: string, filename?: string) {
@@ -522,13 +480,22 @@ export function App() {
 
   async function deleteAnnotation(annotationId: string) {
     if (!selectedAssistant) return;
-    try { setData(await difyApiClient.deleteAnnotation({ assistantId: selectedAssistant.id, annotationId })); setNotice('标注已删除'); }
-    catch (err) { setError(err instanceof Error ? err.message : '标注删除失败。'); }
+    try {
+      setData(await difyApiClient.deleteAnnotation({ assistantId: selectedAssistant.id, annotationId }));
+      setNotice('标注已删除');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '标注删除失败。');
+    }
   }
 
   async function submitHitl(message: Message, inputs: Record<string, string>, action: string) {
-    try { setData(await difyApiClient.submitHitl({ messageId: message.id, inputs, action })); setNotice('人工处理已提交，工作流后续结果已更新'); }
-    catch (err) { setError(err instanceof Error ? err.message : '人工处理提交失败。'); throw err; }
+    try {
+      setData(await difyApiClient.submitHitl({ messageId: message.id, inputs, action }));
+      setNotice('人工处理已提交，工作流后续结果已更新');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '人工处理提交失败。');
+      throw err;
+    }
   }
 
   // 发送消息：先在前端乐观显示用户问题，再等待 Main 返回最新数据。
@@ -600,303 +567,88 @@ export function App() {
     <main className="app-shell">
       <Sidebar activeView={activeView} onChangeView={changeView} />
 
-      {activeView === 'settings' && (
-        <section className="settings-workspace" aria-label="设置界面">
-          <header className="workspace-header">
-            <div>
-              <h1>设置</h1>
-              <p>{isCreatingAssistant ? '新增助手' : selectedAssistant?.name || '选择或新建一个助手配置'}</p>
-            </div>
-            <button className="primary-action" type="button" onClick={createAssistantDraft}>
-              <Plus size={18} />
-              新助手
-            </button>
-          </header>
+      {activeView === 'settings' ? (
+        <AssistantSettingsView
+          assistants={data.assistants}
+          annotations={data.annotations}
+          selectedAssistant={selectedAssistant}
+          selectedAssistantId={selectedAssistantId}
+          form={assistantForm}
+          isCreating={isCreatingAssistant}
+          isSaving={isSaving}
+          notice={notice}
+          error={error}
+          onCreateDraft={createAssistantDraft}
+          onSelectAssistant={(assistantId) => {
+            setIsCreatingAssistant(false);
+            setSelectedAssistantId(assistantId);
+          }}
+          onChangeForm={setAssistantForm}
+          onSave={() => void saveAssistant()}
+          onRefresh={() => void refreshAssistant()}
+          onDeleteAnnotation={(annotationId) => void deleteAnnotation(annotationId)}
+          onCloseStatus={clearStatus}
+        />
+      ) : null}
 
-          <div className="settings-content">
-            <aside className="settings-assistant-list">
-              <div className="section-title">
-                <Bot size={17} />
-                助手
-              </div>
-              <div className="assistant-list">
-                {data.assistants.map((assistant) => (
-                  <button
-                    className={`assistant-item ${assistant.id === selectedAssistantId ? 'active' : ''}`}
-                    key={assistant.id}
-                    type="button"
-                    onClick={() => {
-                      setIsCreatingAssistant(false);
-                      setSelectedAssistantId(assistant.id);
-                    }}
-                  >
-                    <Bot size={18} />
-                    <span>{assistant.name}</span>
-                  </button>
-                ))}
-
-              </div>
-            </aside>
-
-            <div className="settings-panels">
-              <section className="settings-form-panel">
-                <div className="section-title">
-                  <Settings size={17} />
-                  会话配置
-                </div>
-                <div className="settings-form-grid">
-                  <label>
-                    名称（可选）
-                    <input
-                      value={assistantForm.name}
-                      placeholder="留空则自动读取 Dify 应用名称"
-                      onChange={(event) => setAssistantForm((current) => ({ ...current, name: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Dify API 地址
-                    <input
-                      value={assistantForm.apiBaseUrl}
-                      placeholder="http://192.168.1.10/v1"
-                      onChange={(event) =>
-                        setAssistantForm((current) => ({ ...current, apiBaseUrl: event.target.value }))
-                      }
-                    />
-                  </label>
-                  <label>
-                    API Key
-                    <input
-                      value={assistantForm.apiKey}
-                      placeholder={selectedAssistant?.apiKeyMasked || 'app-xxxxxxxx'}
-                      type="password"
-                      onChange={(event) =>
-                        setAssistantForm((current) => ({ ...current, apiKey: event.target.value }))
-                      }
-                    />
-                  </label>
-                  <label>
-                    用户 ID
-                    <input
-                      value={assistantForm.userId}
-                      onChange={(event) => setAssistantForm((current) => ({ ...current, userId: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    应用类型
-                    <select value={assistantForm.mode} onChange={(event) => setAssistantForm((current) => ({ ...current, mode: event.target.value as DifyAppMode }))}>
-                      <option value="chat">聊天助手</option>
-                      <option value="advanced-chat">Chatflow</option>
-                      <option value="agent-chat">Agent</option>
-                      <option value="workflow">Workflow</option>
-                      <option value="completion">文本生成</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div className="settings-actions">
-                  <button className="save-button" type="button" onClick={saveAssistant} disabled={isSaving}>
-                    {isSaving ? <Check size={17} /> : <Save size={17} />}
-                    {isCreatingAssistant ? '新增助手' : '保存助手配置'}
-                  </button>
-                  {selectedAssistant ? <button className="secondary-action" type="button" onClick={() => void refreshAssistant()} disabled={isSaving}><RefreshCw size={17} />重新同步</button> : null}
-                </div>
-                {selectedAssistant?.capabilities?.loaded ? <div className="capability-summary">
-                  <strong>已识别能力</strong>
-                  <span>{selectedAssistant.mode}</span>
-                  <span>输入参数 {selectedAssistant.capabilities.inputFields.length} 个</span>
-                  <span>{selectedAssistant.capabilities.supportsFileUpload ? '支持文件上传' : '无文件上传'}</span>
-                  <span>{selectedAssistant.capabilities.supportsHitl ? '支持 HITL' : ''}</span>
-                </div> : null}
-                {selectedAssistant ? <details className="annotation-manager">
-                  <summary>质量标注（{data.annotations.filter((item) => item.assistantId === selectedAssistant.id).length}）</summary>
-                  {data.annotations.filter((item) => item.assistantId === selectedAssistant.id).map((annotation) => <article key={annotation.id}>
-                    <div><strong>问：</strong>{annotation.question}</div><div><strong>答：</strong>{annotation.answer}</div>
-                    <button type="button" onClick={() => void deleteAnnotation(annotation.id)}><Trash2 size={14} />删除</button>
-                  </article>)}
-                  {!data.annotations.some((item) => item.assistantId === selectedAssistant.id) ? <p>暂无标注，可在 AI 回复下方创建。</p> : null}
-                </details> : null}
-              </section>
-
-              {renderStatusBanner()}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeView === 'chat' && (
+      {activeView === 'chat' ? (
         <section className="chat-workspace" aria-label="会话界面">
-          <aside className="conversations-pane">
-            <div className="pane-header">
-              <div className="pane-title-row">
-                <h2>会话</h2>
-                <div className="pane-header-actions">
-                  <button className="icon-button" type="button" title="新会话" onClick={createConversation}>
-                    <MessageSquarePlus size={18} />
-                  </button>
-                </div>
-              </div>
-              <AssistantPicker
-                assistants={data.assistants}
-                value={selectedAssistantId}
-                syncError={assistantSyncStatus || undefined}
-                onChange={(assistantId) => {
-                  setSelectedAssistantId(assistantId);
-                  setSelectedConversationId('');
-                }}
-              />
-            </div>
-
-            <div className="conversation-list">
-              {conversations.map((conversation) => (
-                <button
-                  className={`conversation-item ${conversation.id === selectedConversationId ? 'active' : ''}`}
-                  key={conversation.id}
-                  type="button"
-                  title={conversation.title}
-                  aria-label={`${conversation.title}，更新于 ${formatTime(conversation.updatedAt)}`}
-                  onClick={() => setSelectedConversationId(conversation.id)}
-                >
-                  <span>{conversation.title}</span>
-                  <small>{formatTime(conversation.updatedAt)}</small>
-                </button>
-              ))}
-
-              {conversations.length === 0 && (
-                <div className="empty-state">
-                  <p>还没有会话</p>
-                  <button type="button" onClick={createConversation}>
-                    创建第一个会话
-                  </button>
-                </div>
-              )}
-            </div>
-          </aside>
-
-          <section className="chat-pane" aria-label="聊天窗口">
-            <header className="chat-header">
-              <div>
-                <h2 title={selectedConversation?.title || '聊天窗口'}>{selectedConversation?.title || '聊天窗口'}</h2>
-                <p>{selectedConversation?.difyConversationId ? `已连接 ${activeAssistantName} 上下文` : '本地新会话'}</p>
-              </div>
-              {selectedConversation && (
-                <div className="chat-header-actions"><button className="icon-button secondary-icon" type="button" title="重命名会话" onClick={() => void renameConversation()}><Pencil size={17} /></button><button
-                  className="danger-button"
-                  type="button"
-                  title="删除会话"
-                  onClick={() => deleteConversation(selectedConversation.id)}
-                >
-                  <Trash2 size={18} />
-                </button></div>
-              )}
-            </header>
-
-            <div className="messages-shell">
-            <div className="messages" ref={messagesRef} onScroll={handleMessagesScroll}>
-              {messages.length === 0 && (
-                <div className="welcome">
-                  <Bot size={30} />
-                  <h3>开始和 {selectedAssistant?.name || '助手'} 对话</h3>
-                  {selectedAssistant?.description ? <p>{selectedAssistant.description}</p> : null}
-                  {capabilities?.openingStatement ? <MarkdownMessage content={capabilities.openingStatement} /> : null}
-                  <SuggestedQuestions questions={capabilities?.openingSuggestedQuestions} disabled={isSending || !selectedConversation} onSelectQuestion={(question) => void sendMessage(question)} />
-                </div>
-              )}
-
-              {messages.map((message) => (
-                <article className={`message ${message.role}`} key={message.id}>
-                  <div className="avatar" aria-hidden="true">
-                    {message.role === 'assistant' ? <Bot size={18} /> : <UserRound size={18} />}
-                  </div>
-                  <div className={`bubble ${message.status === 'error' ? 'error' : ''}`}>
-                    <MessageTraces traces={message.traces} />
-                    <div className="message-copy-scope">
-                      <MarkdownMessage content={message.content} onDownloadFile={(url, filename) => void downloadFile(url, filename)} />
-                    </div>
-                    <MessageAttachments
-                      attachments={message.attachments}
-                      formatFileSize={formatFileSize}
-                      onDownloadFile={(url, filename) => void downloadFile(url, filename)}
-                    />
-                    <CitationList citations={message.citations} onViewSource={setSourceCitation} />
-                    {message.hitl ? <HitlForm hitl={message.hitl} disabled={isSending} onSubmit={(inputs, action) => submitHitl(message, inputs, action)} /> : null}
-                    {message.role === 'assistant' ? (
-                      <SuggestedQuestions
-                        questions={message.suggestedQuestions}
-                        disabled={isSending || !selectedConversation}
-                        onSelectQuestion={(question) => void sendMessage(question)}
-                      />
-                    ) : null}
-                    <MessageFeedback message={message} onFeedback={(target, rating) => void sendFeedback(target, rating)} />
-                    {message.role === 'user' && message.status !== 'error' ? <UserMessageActions message={message} disabled={isSending} onEdit={editUserMessage} /> : null}
-                    {message.role === 'assistant' && message.status !== 'error' ? <MessageActions message={message} onRegenerate={() => {
-                      const index = messages.findIndex((item) => item.id === message.id);
-                      const question = [...messages.slice(0, index)].reverse().find((item) => item.role === 'user')?.content;
-                      if (question) void sendMessage(question);
-                    }} onAnnotate={(answer) => void createAnnotation(message, answer)} /> : null}
-                    <time>{formatTime(message.createdAt)}</time>
-                  </div>
-                </article>
-              ))}
-
-              {isSending && (
-                <article className="message assistant">
-                  <div className="avatar" aria-hidden="true">
-                    <Bot size={18} />
-                  </div>
-                  <div className={`bubble ${streamingContent ? '' : 'muted'}`}>
-                    {streamingContent ? (
-                      <MarkdownMessage content={streamingContent} onDownloadFile={(url, filename) => void downloadFile(url, filename)} />
-                    ) : (
-                      `正在请求 ${activeAssistantName}${loadingDots}`
-                    )}
-                  </div>
-                </article>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            <SelectionCopyPopup />
-
-            {showScrollToBottom && (
-              <button
-                className="scroll-bottom-button"
-                type="button"
-                onClick={() => {
-                  shouldStickToBottomRef.current = true;
-                  setScrollToBottomVisibility(false);
-                  scrollMessagesToBottom();
-                }}
-              >
-                回到底部
-              </button>
-            )}
-            </div>
-
-            {renderStatusBanner()}
-
-            <CapabilityInputs fields={capabilities?.inputFields || []} values={conversationInputs} disabled={isSending} onChange={setConversationInputs} onUpload={uploadFile} />
-
-            <MessageComposer
-              inputRef={inputRef}
-              value={input}
-              isSending={isSending}
-              canSend={canSend}
-              disabled={!selectedConversation}
-              mode={selectedAssistant?.mode}
-              allowUpload={Boolean(capabilities?.supportsFileUpload)}
-              files={pendingFiles}
-              uploading={isUploading}
-              accept={buildFileAccept(capabilities?.fileUpload.allowedFileExtensions, capabilities?.fileUpload.allowedFileTypes)}
-              onChange={setInput}
-              onSend={() => void sendMessage()}
-              onStop={() => void stopCurrentMessage()}
-              onChooseFiles={(files) => void chooseFiles(files)}
-              onRemoveFile={(id) => setPendingFiles((current) => current.filter((file) => file.id !== id))}
-            />
-          </section>
+          <ConversationSidebar
+            assistants={data.assistants}
+            conversations={conversations}
+            selectedAssistantId={selectedAssistantId}
+            selectedConversationId={selectedConversationId}
+            syncError={assistantSyncStatus || undefined}
+            onSelectAssistant={(assistantId) => {
+              setSelectedAssistantId(assistantId);
+              setSelectedConversationId('');
+            }}
+            onSelectConversation={setSelectedConversationId}
+            onCreateConversation={() => void createConversation()}
+          />
+          <ChatPane
+            selectedAssistant={selectedAssistant}
+            selectedConversation={selectedConversation}
+            messages={messages}
+            input={input}
+            conversationInputs={conversationInputs}
+            pendingFiles={pendingFiles}
+            streamingContent={streamingContent}
+            loadingDots={loadingDots}
+            isSending={isSending}
+            isUploading={isUploading}
+            canSend={canSend}
+            notice={notice}
+            error={error}
+            showScrollToBottom={showScrollToBottom}
+            inputRef={inputRef}
+            messagesRef={messagesRef}
+            messagesEndRef={messagesEndRef}
+            onMessagesScroll={handleMessagesScroll}
+            onScrollToBottom={() => {
+              shouldStickToBottomRef.current = true;
+              setScrollToBottomVisibility(false);
+              scrollMessagesToBottom();
+            }}
+            onRenameConversation={renameConversation}
+            onDeleteConversation={deleteConversation}
+            onSendMessage={(query) => void sendMessage(query)}
+            onStopMessage={() => void stopCurrentMessage()}
+            onChangeInput={setInput}
+            onChangeConversationInputs={setConversationInputs}
+            onChooseFiles={(files) => void chooseFiles(files)}
+            onRemoveFile={(id) => setPendingFiles((current) => current.filter((file) => file.id !== id))}
+            onUploadFile={uploadFile}
+            onDownloadFile={(url, filename) => void downloadFile(url, filename)}
+            onFeedback={(message, rating) => void sendFeedback(message, rating)}
+            onSubmitHitl={submitHitl}
+            onEditMessage={editUserMessage}
+            onAnnotateMessage={createAnnotation}
+            onViewSource={setSourceCitation}
+            onCloseStatus={clearStatus}
+          />
         </section>
-      )}
+      ) : null}
 
       {pendingDialog ? (
         <ActionDialog

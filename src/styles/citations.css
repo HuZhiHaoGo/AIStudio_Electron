@@ -1,0 +1,89 @@
+/* 引用预览层：RAGFlow 引用卡片和原始文档查看器。 */
+/* RAGFlow 富引用卡片 */
+.citation-list { display: grid; gap: 10px; margin: 14px 0 6px; border-top: 1px solid var(--border-color); padding-top: 5px; }
+.citation-list-toggle { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr) auto; align-items: center; gap: 7px; width: 100%; min-height: 40px; border: 0; border-radius: 8px; padding: 7px 9px; color: var(--text-main); background: transparent; text-align: left; }
+.citation-list-toggle:hover { background: var(--primary-soft); }
+.citation-list-toggle strong { font-size: 14px; }
+.citation-list-toggle span { display: inline-grid; place-items: center; min-width: 22px; height: 20px; border-radius: 10px; color: var(--primary); background: var(--primary-soft); font-size: 11px; }
+.citation-list-toggle > svg:last-child { grid-column: 5; transition: transform 160ms ease; }
+.citation-list-toggle > svg:last-child.expanded { transform: rotate(180deg); }
+.citation-list > div { display: grid; gap: 9px; }
+.citation-card { overflow: hidden; border: 1px solid var(--border-color); border-radius: 10px; padding: 11px 12px; background: #fbfdff; }
+.citation-card > header { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.citation-number { color: var(--primary); font-weight: 800; }
+.citation-file-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; color: var(--primary); background: var(--primary-soft); }
+.citation-card > header > div { display: grid; min-width: 0; gap: 2px; }
+.citation-card > header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.citation-card > header small { color: var(--text-muted); font-size: 11px; }
+.citation-score { border-radius: 8px; padding: 4px 7px; color: #276b57; background: #e9f7f1; font-size: 11px; white-space: nowrap; }
+.citation-section { margin: 8px 0 0; color: var(--text-muted); font-size: 11px; }
+.citation-detail-error { margin: 8px 0 0; border-radius: 7px; padding: 6px 8px; color: #9a4d24; background: #fff3e8; font-size: 11px; }
+.citation-content { display: -webkit-box; overflow: hidden; margin: 9px 0 0; color: var(--text-main); font-size: 12px; line-height: 1.65; white-space: pre-wrap; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+.citation-content.expanded { display: block; overflow: visible; }
+.citation-expand { display: inline-flex; align-items: center; gap: 3px; border: 0; margin-top: 5px; padding: 2px 0; color: var(--primary); background: transparent; font-size: 11px; }
+.citation-expand svg { transition: transform 160ms ease; }.citation-expand svg.expanded { transform: rotate(180deg); }
+.citation-card > footer { display: flex; justify-content: flex-end; margin-top: 9px; }
+.citation-card > footer button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border-color); border-radius: 7px; padding: 5px 9px; color: var(--primary); background: #fff; font-size: 11px; }
+.citation-card > footer button:disabled { opacity: .5; cursor: not-allowed; }
+.citation-image-gallery { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.citation-image-thumb, .citation-image-fallback { display: grid; place-items: center; width: 112px; height: 76px; overflow: hidden; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted); background: #f3f7fa; font-size: 10px; }
+.citation-image-thumb img { width: 100%; height: 100%; object-fit: cover; }.citation-image-thumb:disabled { cursor: wait; }
+.citation-image-fallback { gap: 3px; }
+.citation-image-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 50px; background: rgba(13, 27, 38, .82); }
+.citation-image-modal > button { position: absolute; top: 22px; right: 24px; display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 50%; color: #fff; background: rgba(255,255,255,.16); }
+.citation-image-modal img { max-width: 92vw; max-height: 88vh; border-radius: 8px; object-fit: contain; }
+.citation-table-list { display: grid; gap: 8px; margin-top: 9px; }
+.citation-table { overflow: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: #fff; }
+.citation-table > strong { font-size: 11px; }.citation-table .markdown-body { font-size: 11px; }
+.citation-table-html table, .citation-table table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.citation-table-html td, .citation-table-html th, .citation-table td, .citation-table th { border: 1px solid var(--border-color); padding: 5px; }
+
+/* 右侧原文 PDF 查看器 */
+.source-viewer { position: fixed; top: 42px; right: 0; bottom: 0; z-index: 60; display: grid; grid-template-rows: auto minmax(0, 1fr); border-left: 1px solid var(--border-color); background: #eef4f9; box-shadow: -16px 0 36px rgba(17, 43, 60, .2); }
+.source-viewer-resize-handle { position: absolute; top: 0; bottom: 0; left: -7px; z-index: 3; width: 14px; cursor: col-resize; touch-action: none; outline: none; }
+.source-viewer-resize-handle::after { content: ''; position: absolute; top: 0; bottom: 0; left: 6px; width: 2px; background: transparent; transition: background 140ms ease, box-shadow 140ms ease; }
+.source-viewer-resize-handle:hover::after, .source-viewer-resize-handle:focus-visible::after, .source-viewer-resizing .source-viewer-resize-handle::after { background: var(--primary); box-shadow: 0 0 0 2px rgba(0, 82, 204, .12); }
+body.source-viewer-resizing, body.source-viewer-resizing * { cursor: col-resize !important; user-select: none !important; }
+.source-viewer > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border-color); padding: 12px 14px; background: #fff; }
+.source-viewer > header > div { display: grid; min-width: 0; gap: 3px; }.source-viewer > header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.source-viewer > header small { color: var(--text-muted); }
+.source-viewer > header button { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; color: var(--text-main); background: var(--primary-soft); }
+.pdf-viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.pdf-toolbar { display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border-color); padding: 8px 12px; background: #fff; }
+.pdf-toolbar button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border-color); border-radius: 7px; color: var(--primary); background: #fff; }.pdf-toolbar button:disabled { opacity: .4; }.pdf-toolbar > span { min-width: 54px; text-align: center; font-size: 12px; }.pdf-toolbar > i { flex: 1; }
+.pdf-mode-switch { display: flex; align-items: center; padding: 2px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--surface-muted); }
+.pdf-toolbar .pdf-mode-switch button { width: auto; min-width: 42px; height: 26px; padding: 0 9px; border: 0; border-radius: 6px; color: var(--text-muted); background: transparent; font-size: 12px; }
+.pdf-toolbar .pdf-mode-switch button.active { color: #fff; background: var(--primary); box-shadow: 0 1px 4px rgba(0, 92, 204, .22); }
+.pdf-scroll-area { overflow: auto; padding: 18px; }.pdf-page { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 4px 18px rgba(20, 45, 60, .17); }.pdf-page canvas { display: block; }
+.pdf-continuous-pages { display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: max-content; }
+.pdf-continuous-page { flex: 0 0 auto; min-width: 320px; overflow: hidden; }
+.pdf-page-number { position: absolute; z-index: 3; top: 8px; left: 8px; display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; color: #fff; background: rgba(20, 45, 60, .68); font-size: 11px; pointer-events: none; }
+.pdf-page-error { display: grid; place-items: center; height: 100%; min-height: 220px; color: var(--danger); background: var(--surface-muted); }
+.pdf-highlight { position: absolute; z-index: 2; border: 2px solid rgba(229, 151, 31, .8); background: rgba(255, 210, 66, .32); pointer-events: none; }
+.pdf-status { display: grid; place-items: center; min-height: 260px; color: var(--text-muted); }.pdf-status.error { color: var(--danger); }
+.office-document-viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; background: #eef4f9; }
+.office-document-viewer.document-without-toolbar { grid-template-rows: minmax(0, 1fr); }
+.office-document-actions { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 7px; min-width: 0; border-bottom: 1px solid var(--border-color); padding: 8px 10px; background: #fff; }
+.sheet-nav-button { display: grid; place-items: center; width: 34px; height: 32px; border: 1px solid var(--border-color); border-radius: 7px; padding: 0; color: var(--primary); background: #fff; }
+.sheet-nav-button:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-soft); }.sheet-nav-button:disabled { opacity: .38; cursor: not-allowed; }
+.word-document { width: min(780px, calc(100% - 36px)); min-height: calc(100% - 36px); margin: 18px auto; padding: 42px 48px; color: #172f45; background: #fff; box-shadow: 0 4px 18px rgba(20, 45, 60, .17); line-height: 1.75; overflow-wrap: anywhere; }
+.word-document img { max-width: 100%; height: auto; }.word-document table { width: 100%; border-collapse: collapse; }.word-document td, .word-document th { border: 1px solid #bccde0; padding: 6px 8px; }
+.office-document-viewer > .word-document, .office-document-viewer > .excel-document { overflow: auto; }
+.sheet-tabs { display: flex; min-width: 0; overflow-x: auto; gap: 5px; scroll-behavior: smooth; scrollbar-width: thin; }
+.sheet-tabs button { max-width: 170px; min-height: 30px; overflow: hidden; border: 1px solid transparent; border-radius: 7px; padding: 0 9px; color: var(--text-muted); background: transparent; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.sheet-tabs button:hover, .sheet-tabs button.active { border-color: var(--border-color); color: var(--primary); background: var(--primary-soft); }
+.excel-document { margin: 14px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; }
+.excel-document table { min-width: 100%; border-collapse: collapse; color: #172f45; background: #fff; font-size: 12px; }
+.excel-document td, .excel-document th { min-width: 90px; border: 1px solid #c9d8e7; padding: 6px 8px; vertical-align: top; white-space: pre-wrap; }
+.excel-document tr:first-child td, .excel-document th { position: sticky; top: 0; z-index: 1; background: #edf5ff; font-weight: 700; }
+.source-document-fallback { display: grid; place-items: center; align-content: center; gap: 10px; min-height: 260px; padding: 30px; color: var(--text-muted); text-align: center; }
+.source-document-fallback strong { color: var(--text-main); }.source-document-fallback p { max-width: 420px; margin: 0; font-size: 12px; line-height: 1.6; }
+.source-image-document { display: grid; place-items: center; min-height: 0; overflow: auto; padding: 18px; }.source-image-document img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 18px rgba(20, 45, 60, .17); }
+.source-text-document { min-height: 0; overflow: auto; margin: 14px; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; color: #172f45; background: #fff; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.7 ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+@media (prefers-color-scheme: dark) {
+  .citation-card, .citation-table { border-color: #405463; color: #e8f0f5; background: #243642; }
+  .citation-card > footer button, .source-viewer > header, .pdf-toolbar, .office-document-actions { border-color: #405463; color: #dceaf3; background: #1f303b; }
+  .citation-content, .citation-list-toggle { color: #e8f0f5; }
+  .citation-image-thumb, .citation-image-fallback { border-color: #405463; background: #1c2c36; }
+  .source-viewer { border-color: #405463; background: #172630; }
+}

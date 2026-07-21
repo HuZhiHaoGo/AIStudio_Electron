@@ -1,0 +1,261 @@
+/* 消息层：消息流、气泡、附件、反馈和 Markdown 内容。 */
+/* 消息滚动区：承载聊天消息流，使用独立滚动条并保留滚动条槽位避免布局跳动。 */
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 26px 28px;
+  padding-right: 18px;
+  overscroll-behavior: contain;
+  scrollbar-color: #9facba #e8edf2;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+}
+
+/* 滚动条样式：统一助手列表、会话列表和消息区的滚动视觉。 */
+.assistant-list::-webkit-scrollbar,
+.conversation-list::-webkit-scrollbar,
+.messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.assistant-list::-webkit-scrollbar-thumb,
+.conversation-list::-webkit-scrollbar-thumb,
+.messages::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #b7c3cf;
+  background-clip: content-box;
+}
+
+.assistant-list::-webkit-scrollbar-track,
+.conversation-list::-webkit-scrollbar-track,
+.messages::-webkit-scrollbar-track {
+  border-radius: 8px;
+  background: #e8edf2;
+}
+
+/* 欢迎态：当前会话没有消息时展示的居中引导区域。 */
+.welcome {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  flex: 1 0 auto;
+  min-height: 0;
+  color: #425466;
+  text-align: center;
+}
+
+.welcome svg {
+  color: var(--primary);
+}
+
+.welcome h3 {
+  margin-top: 12px;
+  font-size: 22px;
+}
+
+/* 单条消息行：默认助手消息左对齐，最大宽度限制保证长内容易读。 */
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 78%;
+}
+
+/* 用户消息：右对齐并反转头像与气泡顺序，和助手消息形成清晰区分。 */
+.message.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+/* 聊天头像：助手和用户消息前的图标容器。 */
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.message.user .avatar {
+  background: #687484;
+}
+
+/* 消息气泡：承载 Markdown 渲染内容、附件、推荐问题、反馈和时间。 */
+.bubble {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 12px 14px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: #ffffff;
+  line-height: 1.65;
+  box-shadow: 0 7px 18px rgba(35, 49, 64, 0.06);
+}
+
+.bubble time {
+  display: block;
+  margin-top: 8px;
+  color: #8795a5;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+/* 消息附件列表：展示 Dify 返回或用户上传的文件链接。 */
+.message-attachments {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* 推荐问题区域：助手消息下方的后续问题按钮列表。 */
+.suggested-questions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #edf2f6;
+}
+
+/* 推荐问题标题：说明下方按钮为可继续追问的问题。 */
+.suggested-questions-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.suggested-questions-title svg {
+  color: var(--primary);
+}
+
+/* 推荐问题按钮列表：允许换行，适配多个短问题或单个长问题。 */
+.suggested-question-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 推荐问题按钮：点击后作为下一轮输入，禁用态用于发送中或不可操作场景。 */
+.suggested-question {
+  max-width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: #1f5f82;
+  background: var(--card-bg);
+  line-height: 1.35;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.suggested-question:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.suggested-question:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* 消息反馈区：助手消息底部点赞/点踩按钮，用于提交 Dify 消息反馈。 */
+.message-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #edf2f6;
+}
+
+/* 反馈按钮：点赞/点踩的基础样式，激活态区分喜欢和不喜欢。 */
+.feedback-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 4px 9px;
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.feedback-button:hover {
+  border-color: var(--border-color);
+  color: #1f5f82;
+  background: var(--card-bg);
+}
+
+.feedback-button.active {
+  border-color: #9fd4c8;
+  color: #17624e;
+  background: #edf9f5;
+}
+
+.feedback-button.active.dislike {
+  border-color: #f0b4ad;
+  color: #91362f;
+  background: #fff1ef;
+}
+
+/* 附件链接：显示文件图标、文件名和文件大小/类型，文件名过长时省略。 */
+.attachment-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  max-width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: #1f5f82;
+  background: var(--card-bg);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.attachment-link:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.attachment-link span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-link small {
+  color: #748496;
+  font-size: 12px;
+}
+
+/* 用户消息内的内容覆盖：用户气泡为主色背景，附件、推荐问题和代码颜色需反白适配。 */
+.message.user .bubble {
+  position: relative;
+  color: #ffffff;
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.message.user .bubble time {
+  color: #d7edf5;
+}

@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import { IPC_CHANNELS } from '../../shared/ipc/channels';
 import type {
   AnnotationRequest, DeleteAnnotationRequest, HitlSubmitRequest, MessageFeedbackRequest, SendMessageRequest,
 } from '../../shared/types/ipc';
@@ -12,7 +13,7 @@ import { now } from '../utils/time';
 const activeDifyRequests = new Map<string, AbortController>();
 
 export function registerMessageHandlers() {
-  ipcMain.handle('message:stop', async (_event, streamId: string) => {
+  ipcMain.handle(IPC_CHANNELS.messageStop, async (_event, streamId: string) => {
     const controller = activeDifyRequests.get(streamId);
     if (!controller) return { stopped: false };
     controller.abort();
@@ -20,7 +21,7 @@ export function registerMessageHandlers() {
     return { stopped: true };
   });
 
-  ipcMain.handle('message:send', async (event, request: SendMessageRequest) => {
+  ipcMain.handle(IPC_CHANNELS.messageSend, async (event, request: SendMessageRequest) => {
     const query = request.query.trim();
     const data = await readData();
     const assistant = data.assistants.find((item) => item.id === request.assistantId);
@@ -68,7 +69,7 @@ export function registerMessageHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('message:feedback', async (_event, request: MessageFeedbackRequest) => {
+  ipcMain.handle(IPC_CHANNELS.messageFeedback, async (_event, request: MessageFeedbackRequest) => {
     const data = await readData();
     const message = data.messages.find((item) => item.id === request.messageId);
     const conversation = data.conversations.find((item) => item.id === message?.conversationId);
@@ -81,7 +82,7 @@ export function registerMessageHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('message:annotate', async (_event, request: AnnotationRequest) => {
+  ipcMain.handle(IPC_CHANNELS.messageAnnotate, async (_event, request: AnnotationRequest) => {
     const data = await readData();
     const message = data.messages.find((item) => item.id === request.messageId);
     const conversation = data.conversations.find((item) => item.id === message?.conversationId);
@@ -94,7 +95,7 @@ export function registerMessageHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('annotation:delete', async (_event, request: DeleteAnnotationRequest) => {
+  ipcMain.handle(IPC_CHANNELS.annotationDelete, async (_event, request: DeleteAnnotationRequest) => {
     const data = await readData();
     const assistant = data.assistants.find((item) => item.id === request.assistantId);
     if (!assistant) throw new Error('未找到助手。');
@@ -105,7 +106,7 @@ export function registerMessageHandlers() {
     return publicData(data);
   });
 
-  ipcMain.handle('message:hitl-submit', async (_event, request: HitlSubmitRequest) => {
+  ipcMain.handle(IPC_CHANNELS.messageHitlSubmit, async (_event, request: HitlSubmitRequest) => {
     const data = await readData();
     const message = data.messages.find((item) => item.id === request.messageId);
     const conversation = data.conversations.find((item) => item.id === message?.conversationId);

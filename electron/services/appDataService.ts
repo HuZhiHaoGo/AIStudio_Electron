@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { AppData } from '../../shared/types/app';
+import type { AppData, PublicAppData } from '../../shared/types/app';
 import { dataFilePath } from '../window/windowPaths';
 import { readAdminConfig } from './adminConfigService';
 import { migrateStoredMessages } from './messageMigration';
@@ -17,7 +17,7 @@ function maskKey(apiKey: string) {
   return `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}`;
 }
 
-export function publicData(data: AppData) {
+export function publicData(data: AppData): PublicAppData {
   return {
     ...data,
     assistants: data.assistants.map(({ apiKey: _apiKey, ...assistant }) => ({

@@ -16,16 +16,28 @@
 
 ```text
 AIStudio_Electron/
-  electron/                 Electron 主进程相关代码
-    main.ts                 创建窗口、本地存储、调用 Dify API、处理 IPC
-    preload.ts              安全桥梁，把少量 API 暴露给 React
-    tsconfig.json           Electron 代码的 TypeScript 编译配置
+  electron/                       Electron 主进程
+    ipc/                          接收渲染进程请求，组织一次业务操作
+    services/                     本地数据、Dify、RAGFlow 和下载服务
+    window/                       创建窗口和管理运行路径
+    main.ts                       主进程启动入口
+    preload.ts                    受控的 IPC 安全桥
 
-  src/                      React 前端代码
-    main.tsx                三栏主界面：助手、会话、聊天窗口
-    MarkdownMessage.tsx     把 Dify 回复的 Markdown 文本渲染成页面
-    styles.css              页面样式
-    vite-env.d.ts           前端 TypeScript 类型声明
+  shared/                         两个进程都能使用的纯 TypeScript 代码
+    ipc/channels.ts               IPC 频道名称的唯一来源
+    types/                        业务类型、公开数据类型和 IPC 契约
+
+  src/                            React 渲染进程
+    components/                   可以跨功能复用的界面组件
+    features/assistants/          助手设置页面
+    features/conversations/       会话导航
+    features/chat/                当前会话和消息界面
+    hooks/                        流式消息、滚动和状态提示
+    services/                     对 window.difyApi 的调用封装
+    styles/                       按职责拆分的样式
+    App.tsx                       状态、业务命令和页面组合
+    main.tsx                      React 挂载入口
+    styles.css                    样式导入顺序入口
 
   scripts/
     wait-for-vite.cjs       开发模式下等待 Vite 启动后再启动 Electron
@@ -69,7 +81,8 @@ AIStudio_Electron/
 
 ## 4. 数据保存在哪里
 
-本项目没有使用数据库，而是用一个 JSON 文件保存数据。
+当前聊天数据和助手管理配置使用两个 JSON 文件保存。这样渲染进程读取聊天状态时，
+主进程可以先移除助手的真实 API Key，只返回 `PublicAssistant`。
 
 文件位置由 Electron 决定：
 
@@ -79,13 +92,20 @@ app.getPath('userData')/aistudio-data.json
 
 也就是说，不同电脑、不同用户的数据文件位置可能不同。
 
-这个文件里保存：
+`aistudio-data.json` 保存：
 
 ```text
-assistants      助手配置
 conversations   会话列表
 messages        聊天记录
+annotations     质量标注
 ```
+
+助手配置由 `electron/services/adminConfigService.ts` 管理。开发模式使用项目中的
+`config/app-config.json`，打包运行后使用用户数据目录下的 `config/app-config.json`。
+真实 API Key 只供 Electron 主进程调用 Dify，React 只能看到掩码。
+
+设置页入口使用产品指定的固定本地密码，验证逻辑保留在
+`electron/ipc/appHandlers.ts`；它的用途是界面访问控制，不参与 API Key 加密。
 
 ## 5. 为什么需要 preload.ts
 
@@ -111,11 +131,15 @@ window.difyApi.getData()
 window.difyApi.sendMessage(...)
 ```
 
+需要特别注意：Electron 沙箱中的 `preload.ts` 运行时不能加载项目内的相对模块。
+因此 IPC 频道值会直接写在 preload 中，再用 TypeScript `satisfies` 对照
+`shared/ipc/channels.ts` 做编译期校验。不要把共享频道作为普通运行时 import 引入 preload。
+
 ## 6. 点击发送后发生什么
 
 以用户点击“发送”为例：
 
-1. `src/main.tsx` 的 `sendMessage()` 被触发。
+1. `src/features/chat/ChatPane.tsx` 把发送操作交给 `src/App.tsx` 的 `sendMessage()`。
 2. React 调用：
 
 ```ts
@@ -125,13 +149,13 @@ window.difyApi.sendMessage(...)
 3. `electron/preload.ts` 把请求转给 Electron Main：
 
 ```ts
-ipcRenderer.invoke('message:send', request)
+ipcRenderer.invoke(IPC_CHANNELS.messageSend, request)
 ```
 
-4. `electron/main.ts` 里的这段代码接住请求：
+4. `electron/ipc/messageHandlers.ts` 接住请求：
 
 ```ts
-ipcMain.handle('message:send', ...)
+ipcMain.handle(IPC_CHANNELS.messageSend, ...)
 ```
 
 5. Main 先把用户问题写入本地 JSON。
@@ -183,8 +207,12 @@ release/win-unpacked/AIStudio.exe
 建议按这个顺序看：
 
 1. `package.json`：先看有哪些命令。
-2. `electron/main.ts`：理解窗口、本地数据、Dify 请求。
-3. `electron/preload.ts`：理解前后端怎么通信。
-4. `src/main.tsx`：理解界面和按钮点击逻辑。
-5. `src/MarkdownMessage.tsx`：理解回答如何渲染成 Markdown。
-6. `src/styles.css`：最后再看样式。
+2. `src/main.tsx`：理解 React 从哪里挂载。
+3. `src/App.tsx`：理解应用状态和业务命令如何连接各个视图。
+4. `src/features/`：分别阅读助手设置、会话导航和聊天界面。
+5. `src/services/difyApiClient.ts`：理解页面如何调用安全桥。
+6. `electron/preload.ts` 和 `shared/ipc/channels.ts`：理解前后端怎么通信。
+7. `electron/ipc/`：理解主进程如何接收具体操作。
+8. `electron/services/`：理解数据保存、Dify 和 RAGFlow 请求。
+9. `src/components/markdown/MarkdownMessage.tsx`：理解回答如何渲染成富文本。
+10. `src/styles.css`：先看样式入口，再按需进入 `src/styles/` 中的功能文件。
